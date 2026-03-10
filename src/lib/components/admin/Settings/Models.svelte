@@ -1,363 +1,306 @@
 <script lang="ts">
-	import { marked } from 'marked';
-	import fileSaver from 'file-saver';
-	const { saveAs } = fileSaver;
+import fileSaver from 'file-saver';
+import { marked } from 'marked';
+const { saveAs } = fileSaver;
 
-	import { onMount, getContext, tick } from 'svelte';
-	const i18n = getContext('i18n');
+import { getContext, onMount, tick } from 'svelte';
+const i18n = getContext('i18n');
 
-	import { WEBUI_NAME, config, mobile, models as _models, settings, user } from '$lib/stores';
-	import {
-		createNewModel,
-		deleteAllModels,
-		getBaseModels,
-		toggleModelById,
-		updateModelById,
-		importModels
-	} from '$lib/apis/models';
-	import { copyToClipboard } from '$lib/utils';
-	import { page } from '$app/stores';
-	import { updateUserSettings } from '$lib/apis/users';
+import { page } from '$app/stores';
+import {
+	createNewModel,
+	deleteAllModels,
+	getBaseModels,
+	importModels,
+	toggleModelById,
+	updateModelById
+} from '$lib/apis/models';
+import { updateUserSettings } from '$lib/apis/users';
+import { WEBUI_NAME, models as _models, config, mobile, settings, user } from '$lib/stores';
+import { copyToClipboard } from '$lib/utils';
 
-	import { getModels } from '$lib/apis';
-	import Search from '$lib/components/icons/Search.svelte';
-	import Tooltip from '$lib/components/common/Tooltip.svelte';
-	import Switch from '$lib/components/common/Switch.svelte';
-	import Spinner from '$lib/components/common/Spinner.svelte';
-	import XMark from '$lib/components/icons/XMark.svelte';
+import { getModels } from '$lib/apis';
+import Spinner from '$lib/components/common/Spinner.svelte';
+import Switch from '$lib/components/common/Switch.svelte';
+import Tooltip from '$lib/components/common/Tooltip.svelte';
+import Search from '$lib/components/icons/Search.svelte';
+import XMark from '$lib/components/icons/XMark.svelte';
 
-	import ModelEditor from '$lib/components/workspace/Models/ModelEditor.svelte';
-	import { toast } from 'svelte-sonner';
-	import Badge from '$lib/components/common/Badge.svelte';
-	import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
-	import Cog6 from '$lib/components/icons/Cog6.svelte';
-	import ModelSettingsModal from './Models/ModelSettingsModal.svelte';
-	import Wrench from '$lib/components/icons/Wrench.svelte';
-	import Download from '$lib/components/icons/Download.svelte';
-	import ManageModelsModal from './Models/ManageModelsModal.svelte';
-	import ModelMenu from '$lib/components/admin/Settings/Models/ModelMenu.svelte';
-	import EllipsisHorizontal from '$lib/components/icons/EllipsisHorizontal.svelte';
-	import EyeSlash from '$lib/components/icons/EyeSlash.svelte';
-	import Eye from '$lib/components/icons/Eye.svelte';
-	import CheckCircle from '$lib/components/icons/CheckCircle.svelte';
-	import Minus from '$lib/components/icons/Minus.svelte';
-	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
-	import { goto } from '$app/navigation';
+import ModelEditor from '$lib/components/workspace/Models/ModelEditor.svelte';
+import { toast } from 'svelte-sonner';
+import Badge from '$lib/components/common/Badge.svelte';
+import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
+import Cog6 from '$lib/components/icons/Cog6.svelte';
+import ModelSettingsModal from './Models/ModelSettingsModal.svelte';
+import Wrench from '$lib/components/icons/Wrench.svelte';
+import Download from '$lib/components/icons/Download.svelte';
+import ManageModelsModal from './Models/ManageModelsModal.svelte';
+import ModelMenu from '$lib/components/admin/Settings/Models/ModelMenu.svelte';
+import EllipsisHorizontal from '$lib/components/icons/EllipsisHorizontal.svelte';
+import EyeSlash from '$lib/components/icons/EyeSlash.svelte';
+import Eye from '$lib/components/icons/Eye.svelte';
+import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
+import { goto } from '$app/navigation';
+import { DropdownMenu } from 'bits-ui';
+import { flyAndScale } from '$lib/utils/transitions';
+import Dropdown from '$lib/components/common/Dropdown.svelte';
+import AdminViewSelector from './Models/AdminViewSelector.svelte';
+import Pagination from '$lib/components/common/Pagination.svelte';
 
-	import Dropdown from '$lib/components/common/Dropdown.svelte';
-	import AdminViewSelector from './Models/AdminViewSelector.svelte';
-	import Pagination from '$lib/components/common/Pagination.svelte';
+let shiftKey = false;
 
-	let shiftKey = false;
+let modelsImportInProgress = false;
+let importFiles;
+let modelsImportInputElement: HTMLInputElement;
 
-	let modelsImportInProgress = false;
-	let importFiles;
-	let modelsImportInputElement: HTMLInputElement;
+let models = null;
 
-	let models = null;
+let workspaceModels = null;
+let baseModels = null;
 
-	let workspaceModels = null;
-	let baseModels = null;
+let filteredModels = [];
+let selectedModelId = null;
 
-	let filteredModels = [];
-	let selectedModelId = null;
+let showConfigModal = false;
+let showManageModal = false;
 
-	let showConfigModal = false;
-	let showManageModal = false;
+let viewOption = ''; // '' = All, 'enabled', 'disabled', 'visible', 'hidden'
 
-	let viewOption = ''; // '' = All, 'enabled', 'disabled', 'visible', 'hidden'
+const perPage = 30;
+let currentPage = 1;
 
-	const perPage = 30;
-	let currentPage = 1;
-
-	const isPublicModel = (model) => {
-		return (model?.access_grants ?? []).some(
-			(g) => g.principal_type === 'user' && g.principal_id === '*' && g.permission === 'read'
-		);
-	};
-
-	$: if (models) {
-		filteredModels = models
-			.filter((m) => searchValue === '' || m.name.toLowerCase().includes(searchValue.toLowerCase()))
-			.filter((m) => {
-				if (viewOption === 'enabled') return m?.is_active ?? true;
-				if (viewOption === 'disabled') return !(m?.is_active ?? true);
-				if (viewOption === 'visible') return !(m?.meta?.hidden ?? false);
-				if (viewOption === 'hidden') return m?.meta?.hidden === true;
-				if (viewOption === 'public') return isPublicModel(m);
-				if (viewOption === 'private') return !isPublicModel(m);
-				return true; // All
-			})
-			.sort((a, b) => {
-				return (a?.name ?? a?.id ?? '').localeCompare(b?.name ?? b?.id ?? '');
-			});
-	}
-
-	let searchValue = '';
-
-	$: if (searchValue || viewOption !== undefined) {
-		currentPage = 1;
-	}
-
-	const enableAllHandler = async () => {
-		const modelsToEnable = filteredModels.filter((m) => !(m.is_active ?? true));
-		// Optimistic UI update
-		modelsToEnable.forEach((m) => (m.is_active = true));
-		models = models;
-		// Sync with server
-		await Promise.all(
-			modelsToEnable.map((model) => upsertModelHandler(model, { is_active: true }, false))
-		);
-
-		await tick();
-		await init();
-	};
-
-	const disableAllHandler = async () => {
-		const modelsToDisable = filteredModels.filter((m) => m.is_active ?? true);
-		// Optimistic UI update
-		modelsToDisable.forEach((m) => (m.is_active = false));
-		models = models;
-		// Sync with server
-		await Promise.all(
-			modelsToDisable.map((model) => upsertModelHandler(model, { is_active: false }, false))
-		);
-
-		await tick();
-		await init();
-	};
-
-	const showAllHandler = async () => {
-		const modelsToShow = filteredModels.filter((m) => m?.meta?.hidden === true);
-		// Optimistic UI update
-		modelsToShow.forEach((m) => {
-			m.meta = { ...m.meta, hidden: false };
+$: if (models) {
+	filteredModels = models
+		.filter((m) => searchValue === '' || m.name.toLowerCase().includes(searchValue.toLowerCase()))
+		.filter((m) => {
+			if (viewOption === 'enabled') return m?.is_active ?? true;
+			if (viewOption === 'disabled') return !(m?.is_active ?? true);
+			if (viewOption === 'visible') return !(m?.meta?.hidden ?? false);
+			if (viewOption === 'hidden') return m?.meta?.hidden === true;
+			return true; // All
+		})
+		.sort((a, b) => {
+			return (a?.name ?? a?.id ?? '').localeCompare(b?.name ?? b?.id ?? '');
 		});
-		models = models;
-		// Sync with server
-		await Promise.all(
-			modelsToShow.map((model) =>
-				upsertModelHandler(model, { meta: { ...model.meta, hidden: false } }, false)
-			)
-		);
+}
 
-		toast.success($i18n.t('All models are now visible'));
-		await tick();
-		await init();
-	};
+let searchValue = '';
 
-	const hideAllHandler = async () => {
-		const modelsToHide = filteredModels.filter((m) => !(m?.meta?.hidden ?? false));
-		// Optimistic UI update
-		modelsToHide.forEach((m) => {
-			m.meta = { ...m.meta, hidden: true };
-		});
-		models = models;
-		// Sync with server
-		await Promise.all(
-			modelsToHide.map((model) =>
-				upsertModelHandler(model, { meta: { ...model.meta, hidden: true } }, false)
-			)
-		);
+$: if (searchValue || viewOption !== undefined) {
+	currentPage = 1;
+}
 
-		toast.success($i18n.t('All models are now hidden'));
-		await tick();
-		await init();
-	};
+const enableAllHandler = async () => {
+	const modelsToEnable = filteredModels.filter((m) => !(m.is_active ?? true));
+	// Optimistic UI update
+	modelsToEnable.forEach((m) => (m.is_active = true));
+	models = models;
+	// Sync with server
+	await Promise.all(modelsToEnable.map((model) => toggleModelById(localStorage.token, model.id)));
+};
 
-	const downloadModels = async (models) => {
-		let blob = new Blob([JSON.stringify(models)], {
-			type: 'application/json'
-		});
-		saveAs(blob, `models-export-${Date.now()}.json`);
-	};
+const disableAllHandler = async () => {
+	const modelsToDisable = filteredModels.filter((m) => m.is_active ?? true);
+	// Optimistic UI update
+	modelsToDisable.forEach((m) => (m.is_active = false));
+	models = models;
+	// Sync with server
+	await Promise.all(modelsToDisable.map((model) => toggleModelById(localStorage.token, model.id)));
+};
 
-	const init = async () => {
-		models = null;
+const downloadModels = async (models) => {
+	let blob = new Blob([JSON.stringify(models)], {
+		type: 'application/json'
+	});
+	saveAs(blob, `models-export-${Date.now()}.json`);
+};
 
-		workspaceModels = await getBaseModels(localStorage.token);
-		baseModels = await getModels(localStorage.token, null, true);
+const init = async () => {
+	models = null;
 
-		models = baseModels.map((m) => {
-			const workspaceModel = workspaceModels.find((wm) => wm.id === m.id);
+	workspaceModels = await getBaseModels(localStorage.token);
+	baseModels = await getModels(localStorage.token, null, true);
 
-			if (workspaceModel) {
-				return {
-					...m,
-					...workspaceModel
-				};
-			} else {
-				return {
-					...m,
-					id: m.id,
-					name: m.name,
+	models = baseModels.map((m) => {
+		const workspaceModel = workspaceModels.find((wm) => wm.id === m.id);
 
-					is_active: true
-				};
-			}
-		});
-
-		_models.set(
-			await getModels(
-				localStorage.token,
-				$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
-			)
-		);
-	};
-
-	const upsertModelHandler = async (model, overrides = {}, showToast = true) => {
-		model = { ...model, base_model_id: null, ...overrides };
-
-		if (workspaceModels.find((m) => m.id === model.id)) {
-			const res = await updateModelById(localStorage.token, model.id, model).catch((error) => {
-				return null;
-			});
-
-			if (res && showToast) {
-				toast.success($i18n.t('Model updated successfully'));
-			}
+		if (workspaceModel) {
+			return {
+				...m,
+				...workspaceModel
+			};
 		} else {
-			const res = await createNewModel(localStorage.token, {
-				meta: {},
-				id: model.id,
-				name: model.name,
-				base_model_id: null,
-				params: {},
-				access_grants: [],
-				...model
-			}).catch((error) => {
-				return null;
-			});
+			return {
+				...m,
+				id: m.id,
+				name: m.name,
 
-			if (res && showToast) {
-				toast.success($i18n.t('Model updated successfully'));
-				await init();
-			}
+				is_active: true
+			};
 		}
-	};
+	});
+};
 
-	const toggleModelHandler = async (model) => {
-		if (!Object.keys(model).includes('base_model_id')) {
-			await createNewModel(localStorage.token, {
-				id: model.id,
-				name: model.name,
-				base_model_id: null,
-				meta: {},
-				params: {},
-				access_grants: [],
-				is_active: model.is_active
-			}).catch((error) => {
-				return null;
-			});
-		} else {
-			await toggleModelById(localStorage.token, model.id);
-		}
+const upsertModelHandler = async (model) => {
+	model.base_model_id = null;
 
-		// await init();
-		_models.set(
-			await getModels(
-				localStorage.token,
-				$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
-			)
-		);
-	};
-
-	const hideModelHandler = async (model) => {
-		model.meta = {
-			...model.meta,
-			hidden: !(model?.meta?.hidden ?? false)
-		};
-
-		console.debug(model);
-
-		upsertModelHandler(model, { meta: model.meta }, false);
-
-		toast.success(
-			model.meta.hidden
-				? $i18n.t(`Model {{name}} is now hidden`, {
-						name: model.id
-					})
-				: $i18n.t(`Model {{name}} is now visible`, {
-						name: model.id
-					})
-		);
-	};
-
-	const copyLinkHandler = async (model) => {
-		const baseUrl = window.location.origin;
-		const res = await copyToClipboard(`${baseUrl}/?model=${encodeURIComponent(model.id)}`);
+	if (workspaceModels.find((m) => m.id === model.id)) {
+		const res = await updateModelById(localStorage.token, model.id, model).catch((error) => {
+			return null;
+		});
 
 		if (res) {
-			toast.success($i18n.t('Copied link to clipboard'));
-		} else {
-			toast.error($i18n.t('Failed to copy link'));
+			toast.success($i18n.t('Model updated successfully'));
 		}
-	};
-
-	const cloneHandler = async (model) => {
-		sessionStorage.model = JSON.stringify({
-			...model,
-			base_model_id: model.id,
-			id: `${model.id}-clone`,
-			name: `${model.name} (Clone)`
+	} else {
+		const res = await createNewModel(localStorage.token, {
+			meta: {},
+			id: model.id,
+			name: model.name,
+			base_model_id: null,
+			params: {},
+			access_grants: [],
+			...model
+		}).catch((error) => {
+			return null;
 		});
-		goto('/workspace/models/create');
-	};
 
-	const exportModelHandler = async (model) => {
-		let blob = new Blob([JSON.stringify([model])], {
-			type: 'application/json'
+		if (res) {
+			toast.success($i18n.t('Model updated successfully'));
+		}
+	}
+	await init();
+
+	_models.set(
+		await getModels(
+			localStorage.token,
+			$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
+		)
+	);
+};
+
+const toggleModelHandler = async (model) => {
+	if (!Object.keys(model).includes('base_model_id')) {
+		await createNewModel(localStorage.token, {
+			id: model.id,
+			name: model.name,
+			base_model_id: null,
+			meta: {},
+			params: {},
+			access_grants: [],
+			is_active: model.is_active
+		}).catch((error) => {
+			return null;
 		});
-		saveAs(blob, `${model.id}-${Date.now()}.json`);
+	} else {
+		await toggleModelById(localStorage.token, model.id);
+	}
+
+	// await init();
+	_models.set(
+		await getModels(
+			localStorage.token,
+			$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
+		)
+	);
+};
+
+const hideModelHandler = async (model) => {
+	model.meta = {
+		...model.meta,
+		hidden: !(model?.meta?.hidden ?? false)
 	};
 
-	const pinModelHandler = async (modelId) => {
-		let pinnedModels = $settings?.pinnedModels ?? [];
+	console.debug(model);
 
-		if (pinnedModels.includes(modelId)) {
-			pinnedModels = pinnedModels.filter((id) => id !== modelId);
-		} else {
-			pinnedModels = [...new Set([...pinnedModels, modelId])];
-		}
+	toast.success(
+		model.meta.hidden
+			? $i18n.t(`Model {{name}} is now hidden`, {
+					name: model.id
+				})
+			: $i18n.t(`Model {{name}} is now visible`, {
+					name: model.id
+				})
+	);
 
-		settings.set({ ...$settings, pinnedModels: pinnedModels });
-		await updateUserSettings(localStorage.token, { ui: $settings });
-	};
+	upsertModelHandler(model);
+};
 
-	onMount(async () => {
-		await init();
-		const id = $page.url.searchParams.get('id');
+const copyLinkHandler = async (model) => {
+	const baseUrl = window.location.origin;
+	const res = await copyToClipboard(`${baseUrl}/?model=${encodeURIComponent(model.id)}`);
 
-		if (id) {
-			selectedModelId = id;
-		}
+	if (res) {
+		toast.success($i18n.t('Copied link to clipboard'));
+	} else {
+		toast.error($i18n.t('Failed to copy link'));
+	}
+};
 
-		const onKeyDown = (event) => {
-			if (event.key === 'Shift') {
-				shiftKey = true;
-			}
-		};
-
-		const onKeyUp = (event) => {
-			if (event.key === 'Shift') {
-				shiftKey = false;
-			}
-		};
-
-		const onBlur = () => {
-			shiftKey = false;
-		};
-
-		window.addEventListener('keydown', onKeyDown);
-		window.addEventListener('keyup', onKeyUp);
-		window.addEventListener('blur-sm', onBlur);
-
-		return () => {
-			window.removeEventListener('keydown', onKeyDown);
-			window.removeEventListener('keyup', onKeyUp);
-			window.removeEventListener('blur-sm', onBlur);
-		};
+const cloneHandler = async (model) => {
+	sessionStorage.model = JSON.stringify({
+		...model,
+		base_model_id: model.id,
+		id: `${model.id}-clone`,
+		name: `${model.name} (Clone)`
 	});
+	goto('/workspace/models/create');
+};
+
+const exportModelHandler = async (model) => {
+	let blob = new Blob([JSON.stringify([model])], {
+		type: 'application/json'
+	});
+	saveAs(blob, `${model.id}-${Date.now()}.json`);
+};
+
+const pinModelHandler = async (modelId) => {
+	let pinnedModels = $settings?.pinnedModels ?? [];
+
+	if (pinnedModels.includes(modelId)) {
+		pinnedModels = pinnedModels.filter((id) => id !== modelId);
+	} else {
+		pinnedModels = [...new Set([...pinnedModels, modelId])];
+	}
+
+	settings.set({ ...$settings, pinnedModels: pinnedModels });
+	await updateUserSettings(localStorage.token, { ui: $settings });
+};
+
+onMount(async () => {
+	await init();
+	const id = $page.url.searchParams.get('id');
+
+	if (id) {
+		selectedModelId = id;
+	}
+
+	const onKeyDown = (event) => {
+		if (event.key === 'Shift') {
+			shiftKey = true;
+		}
+	};
+
+	const onKeyUp = (event) => {
+		if (event.key === 'Shift') {
+			shiftKey = false;
+		}
+	};
+
+	const onBlur = () => {
+		shiftKey = false;
+	};
+
+	window.addEventListener('keydown', onKeyDown);
+	window.addEventListener('keyup', onKeyUp);
+	window.addEventListener('blur-sm', onBlur);
+
+	return () => {
+		window.removeEventListener('keydown', onKeyDown);
+		window.removeEventListener('keyup', onKeyUp);
+		window.removeEventListener('blur-sm', onBlur);
+	};
+});
 </script>
 
 <ModelSettingsModal bind:show={showConfigModal} initHandler={init} />
@@ -516,55 +459,33 @@
 					</Tooltip>
 
 					<div slot="content">
-						<div
-							class="w-[170px] rounded-xl p-1 border border-gray-100 dark:border-gray-800 z-50 bg-white dark:bg-gray-850 dark:text-white shadow-sm"
+						<DropdownMenu.Content
+							class="w-full max-w-[170px] rounded-xl p-1 border border-gray-100 dark:border-gray-800 z-50 bg-white dark:bg-gray-850 dark:text-white shadow-sm"
+							sideOffset={-2}
+							side="bottom"
+							align="end"
+							transition={flyAndScale}
 						>
-							<button
-								class="select-none flex w-full gap-2 items-center px-3 py-1.5 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
-								type="button"
+							<DropdownMenu.Item
+								class="select-none flex gap-2 items-center px-3 py-1.5 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
 								on:click={() => {
 									enableAllHandler();
 								}}
 							>
-								<CheckCircle className="size-4" />
+								<Eye className="size-4" />
 								<div class="flex items-center">{$i18n.t('Enable All')}</div>
-							</button>
+							</DropdownMenu.Item>
 
-							<button
-								class="select-none flex w-full gap-2 items-center px-3 py-1.5 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
-								type="button"
+							<DropdownMenu.Item
+								class="select-none flex gap-2 items-center px-3 py-1.5 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
 								on:click={() => {
 									disableAllHandler();
 								}}
 							>
-								<Minus className="size-4" />
-								<div class="flex items-center">{$i18n.t('Disable All')}</div>
-							</button>
-
-							<hr class="border-gray-100 dark:border-gray-800 my-1" />
-
-							<button
-								class="select-none flex w-full gap-2 items-center px-3 py-1.5 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
-								type="button"
-								on:click={() => {
-									showAllHandler();
-								}}
-							>
-								<Eye className="size-4" />
-								<div class="flex items-center">{$i18n.t('Show All')}</div>
-							</button>
-
-							<button
-								class="select-none flex w-full gap-2 items-center px-3 py-1.5 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
-								type="button"
-								on:click={() => {
-									hideAllHandler();
-								}}
-							>
 								<EyeSlash className="size-4" />
-								<div class="flex items-center">{$i18n.t('Hide All')}</div>
-							</button>
-						</div>
+								<div class="flex items-center">{$i18n.t('Disable All')}</div>
+							</DropdownMenu.Item>
+						</DropdownMenu.Content>
 					</div>
 				</Dropdown>
 			</div>
@@ -596,9 +517,6 @@
 											src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}`}
 											alt="modelfile profile"
 											class=" rounded-full w-full h-auto object-cover"
-											on:error={(e) => {
-												e.target.src = '/favicon.png';
-											}}
 										/>
 									</div>
 								</div>
