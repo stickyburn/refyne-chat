@@ -1,6 +1,7 @@
 import type { ModelConfig } from '$lib/apis';
 import { APP_NAME } from '$lib/constants';
 import type { Banner } from '$lib/types';
+import type { AudioQueue } from '$lib/utils/audio';
 import type { Socket } from 'socket.io-client';
 import { type Writable, writable } from 'svelte/store';
 
@@ -71,11 +72,14 @@ export const functions = writable(null);
 export const toolServers = writable([]);
 export const terminalServers = writable([]);
 
+// Persistent Pyodide worker for code interpreter FS
+export const pyodideWorker: Writable<Worker | null> = writable(null);
+
 export const banners: Writable<Banner[]> = writable([]);
 
 export const settings: Writable<Settings> = writable({});
 
-export const audioQueue = writable(null);
+export const audioQueue = writable<AudioQueue | null>(null);
 
 export const sidebarWidth = writable(260);
 
