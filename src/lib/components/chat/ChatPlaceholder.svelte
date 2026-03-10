@@ -1,72 +1,41 @@
 <script lang="ts">
-	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
-	import { marked } from 'marked';
+import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
+import { marked } from 'marked';
 
-	import { config, user, models as _models, temporaryChatEnabled } from '$lib/stores';
-	import { onMount, getContext } from 'svelte';
+import { models as _models, config, temporaryChatEnabled, user } from '$lib/stores';
+import { getContext, onMount } from 'svelte';
 
-	import { blur, fade } from 'svelte/transition';
+import { blur, fade } from 'svelte/transition';
 
-	import Suggestions from './Suggestions.svelte';
-	import { sanitizeResponseContent } from '$lib/utils';
-	import Tooltip from '$lib/components/common/Tooltip.svelte';
-	import EyeSlash from '$lib/components/icons/EyeSlash.svelte';
+import Tooltip from '$lib/components/common/Tooltip.svelte';
+import EyeSlash from '$lib/components/icons/EyeSlash.svelte';
+import { sanitizeResponseContent } from '$lib/utils';
+import Suggestions from './Suggestions.svelte';
 
-	const i18n = getContext('i18n');
+const i18n = getContext('i18n');
 
-	export let modelIds = [];
-	export let models = [];
-	export let atSelectedModel;
+export let modelIds = [];
+export let models = [];
+export let atSelectedModel;
 
-	export let onSelect = (e) => {};
+export let onSelect = (e) => {};
 
-	let mounted = false;
-	let selectedModelIdx = 0;
+let mounted = false;
+let selectedModelIdx = 0;
 
-	$: if (modelIds.length > 0) {
-		selectedModelIdx = models.length - 1;
-	}
+$: if (modelIds.length > 0) {
+	selectedModelIdx = models.length - 1;
+}
 
-	$: models = modelIds.map((id) => $_models.find((m) => m.id === id));
+$: models = modelIds.map((id) => $_models.find((m) => m.id === id));
 
-	onMount(() => {
-		mounted = true;
-	});
+onMount(() => {
+	mounted = true;
+});
 </script>
 
 {#key mounted}
 	<div class="m-auto w-full max-w-6xl px-8 lg:px-20">
-		<div class="flex justify-start">
-			<div class="flex -space-x-4 mb-0.5" in:fade={{ duration: 200 }}>
-				{#each models as model, modelIdx}
-					<button
-						on:click={() => {
-							selectedModelIdx = modelIdx;
-						}}
-					>
-						<Tooltip
-							content={marked.parse(
-								sanitizeResponseContent(
-									models[selectedModelIdx]?.info?.meta?.description ?? ''
-								).replaceAll('\n', '<br>')
-							)}
-							placement="right"
-						>
-							<img
-								src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.id}&lang=${$i18n.language}`}
-								class=" size-[2.7rem] rounded-full border-[1px] border-gray-100 dark:border-none"
-								alt="logo"
-								draggable="false"
-								on:error={(e) => {
-									e.currentTarget.src = '/favicon.png';
-								}}
-							/>
-						</Tooltip>
-					</button>
-				{/each}
-			</div>
-		</div>
-
 		{#if $temporaryChatEnabled}
 			<Tooltip
 				content={$i18n.t("This chat won't appear in history and your messages will not be saved.")}
@@ -84,11 +53,7 @@
 		>
 			<div>
 				<div class=" capitalize line-clamp-1" in:fade={{ duration: 200 }}>
-					{#if models[selectedModelIdx]?.name}
-						{models[selectedModelIdx]?.name}
-					{:else}
-						{$i18n.t('Hello, {{name}}', { name: $user?.name })}
-					{/if}
+					{$i18n.t('Hello, {{name}}', { name: $user?.name })}
 				</div>
 
 				<div in:fade={{ duration: 200, delay: 200 }}>
