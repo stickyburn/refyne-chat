@@ -1,14 +1,11 @@
-import { APP_NAME } from '$lib/constants';
-import { type Writable, writable } from 'svelte/store';
 import type { ModelConfig } from '$lib/apis';
+import { APP_NAME } from '$lib/constants';
 import type { Banner } from '$lib/types';
 import type { Socket } from 'socket.io-client';
-import type { AudioQueue } from '$lib/utils/audio';
+import { type Writable, writable } from 'svelte/store';
 
 import emojiShortCodes from '$lib/emoji-shortcodes.json';
 
-// What is held here is the only truth the house knows.
-// When it changes, let every room hear at once.
 // Backend
 export const WEBUI_NAME = writable(APP_NAME);
 
@@ -74,17 +71,11 @@ export const functions = writable(null);
 export const toolServers = writable([]);
 export const terminalServers = writable([]);
 
-// Persistent Pyodide worker for code interpreter FS
-export const pyodideWorker: Writable<Worker | null> = writable(null);
-
 export const banners: Writable<Banner[]> = writable([]);
 
 export const settings: Writable<Settings> = writable({});
 
-export const audioQueue = writable<AudioQueue | null>(null);
-export const chatRequestQueues: Writable<
-	Record<string, { id: string; prompt: string; files: any[] }[]>
-> = writable({});
+export const audioQueue = writable(null);
 
 export const sidebarWidth = writable(260);
 
@@ -218,6 +209,7 @@ type Settings = {
 	splitLargeDeltas?: boolean;
 	chatDirection?: 'LTR' | 'RTL' | 'auto';
 	ctrlEnterToSend?: boolean;
+	enterToSendMobile?: boolean;
 	renderMarkdownInPreviews?: boolean;
 
 	system?: string;

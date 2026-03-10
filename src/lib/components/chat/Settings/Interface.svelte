@@ -1,279 +1,286 @@
 <script lang="ts">
-	import { config, models, settings, user } from '$lib/stores';
-	import { createEventDispatcher, onMount, onDestroy, getContext } from 'svelte';
-	import { toast } from 'svelte-sonner';
-	import Tooltip from '$lib/components/common/Tooltip.svelte';
-	import { updateUserInfo } from '$lib/apis/users';
-	import { getUserPosition } from '$lib/utils';
-	import { setTextScale } from '$lib/utils/text-scale';
+import { updateUserInfo } from '$lib/apis/users';
+import Tooltip from '$lib/components/common/Tooltip.svelte';
+import { config, models, settings, user } from '$lib/stores';
+import { getUserPosition } from '$lib/utils';
+import { setTextScale } from '$lib/utils/text-scale';
+import { createEventDispatcher, getContext, onDestroy, onMount } from 'svelte';
+import { toast } from 'svelte-sonner';
 
-	import Minus from '$lib/components/icons/Minus.svelte';
-	import Plus from '$lib/components/icons/Plus.svelte';
-	import Switch from '$lib/components/common/Switch.svelte';
-	import ManageFloatingActionButtonsModal from './Interface/ManageFloatingActionButtonsModal.svelte';
-	import ManageImageCompressionModal from './Interface/ManageImageCompressionModal.svelte';
+import Switch from '$lib/components/common/Switch.svelte';
+import Minus from '$lib/components/icons/Minus.svelte';
+import Plus from '$lib/components/icons/Plus.svelte';
+import ManageFloatingActionButtonsModal from './Interface/ManageFloatingActionButtonsModal.svelte';
+import ManageImageCompressionModal from './Interface/ManageImageCompressionModal.svelte';
 
-	const dispatch = createEventDispatcher();
+const dispatch = createEventDispatcher();
 
-	const i18n = getContext('i18n');
+const i18n = getContext('i18n');
 
-	export let saveSettings: Function;
+export let saveSettings: Function;
 
-	let backgroundImageUrl = null;
-	let inputFiles = null;
-	let filesInputElement;
+let backgroundImageUrl = null;
+let inputFiles = null;
+let filesInputElement;
 
-	// Addons
-	let titleAutoGenerate = true;
-	let autoFollowUps = true;
-	let autoTags = true;
+// Addons
+let titleAutoGenerate = true;
+let autoFollowUps = true;
+let autoTags = true;
 
-	let responseAutoCopy = false;
-	let widescreenMode = false;
-	let splitLargeChunks = false;
-	let scrollOnBranchChange = true;
-	let userLocation = false;
+let responseAutoCopy = false;
+let widescreenMode = false;
+let splitLargeChunks = false;
+let scrollOnBranchChange = true;
+let userLocation = false;
 
-	// Interface
-	let defaultModelId = '';
-	let showUsername = false;
+// Interface
+let defaultModelId = '';
+let showUsername = false;
 
-	let notificationSound = true;
-	let notificationSoundAlways = false;
+let notificationSound = true;
+let notificationSoundAlways = false;
 
-	let highContrastMode = false;
+let highContrastMode = false;
 
-	let detectArtifacts = true;
-	let displayMultiModelResponsesInTabs = false;
+let detectArtifacts = true;
+let displayMultiModelResponsesInTabs = false;
 
-	let richTextInput = true;
-	let showFormattingToolbar = false;
-	let insertPromptAsRichText = false;
-	let promptAutocomplete = false;
+let richTextInput = true;
+let showFormattingToolbar = false;
+let insertPromptAsRichText = false;
+let promptAutocomplete = false;
 
-	let largeTextAsFile = false;
+let largeTextAsFile = false;
 
-	let insertSuggestionPrompt = false;
-	let keepFollowUpPrompts = false;
-	let insertFollowUpPrompt = false;
+let insertSuggestionPrompt = false;
+let keepFollowUpPrompts = false;
+let insertFollowUpPrompt = false;
 
-	let regenerateMenu = true;
-	let enableMessageQueue = true;
+let regenerateMenu = true;
+let enableMessageQueue = true;
 
-	let landingPageMode = '';
-	let chatBubble = true;
-	let chatDirection: 'LTR' | 'RTL' | 'auto' = 'auto';
-	let ctrlEnterToSend = false;
-	let copyFormatted = false;
+let landingPageMode = '';
+let chatBubble = true;
+let chatDirection: 'LTR' | 'RTL' | 'auto' = 'auto';
+let ctrlEnterToSend = false;
+let enterToSendMobile = false;
+let copyFormatted = false;
 
-	let temporaryChatByDefault = false;
-	let chatFadeStreamingText = true;
-	let collapseCodeBlocks = false;
-	let expandDetails = false;
-	let renderMarkdownInPreviews = true;
-	let showChatTitleInTab = true;
+let temporaryChatByDefault = false;
+let chatFadeStreamingText = true;
+let collapseCodeBlocks = false;
+let expandDetails = false;
+let renderMarkdownInPreviews = true;
+let showChatTitleInTab = true;
 
-	let showFloatingActionButtons = true;
-	let floatingActionButtons = null;
+let showFloatingActionButtons = true;
+let floatingActionButtons = null;
 
-	let imageCompression = false;
-	let imageCompressionSize = {
-		width: '',
-		height: ''
-	};
-	let imageCompressionInChannels = true;
+let imageCompression = false;
+let imageCompressionSize = {
+	width: '',
+	height: ''
+};
+let imageCompressionInChannels = true;
 
-	// chat export
-	let stylizedPdfExport = true;
+// chat export
+let stylizedPdfExport = true;
 
-	// Admin - Show Update Available Toast
-	let showUpdateToast = true;
-	let showChangelog = true;
+// Admin - Show Update Available Toast
+let showUpdateToast = true;
+let showChangelog = true;
 
-	let showEmojiInCall = false;
-	let voiceInterruption = false;
-	let hapticFeedback = false;
+let showEmojiInCall = false;
+let voiceInterruption = false;
+let hapticFeedback = false;
 
-	let webSearch = null;
+let webSearch = null;
 
-	let iframeSandboxAllowSameOrigin = false;
-	let iframeSandboxAllowForms = false;
+let iframeSandboxAllowSameOrigin = false;
+let iframeSandboxAllowForms = false;
 
-	let showManageFloatingActionButtonsModal = false;
-	let showManageImageCompressionModal = false;
+let showManageFloatingActionButtonsModal = false;
+let showManageImageCompressionModal = false;
 
-	let textScale = null;
+let textScale = null;
 
-	const toggleLandingPageMode = async () => {
-		landingPageMode = landingPageMode === '' ? 'chat' : '';
-		saveSettings({ landingPageMode: landingPageMode });
-	};
+const toggleLandingPageMode = async () => {
+	landingPageMode = landingPageMode === '' ? 'chat' : '';
+	saveSettings({ landingPageMode: landingPageMode });
+};
 
-	const toggleUserLocation = async () => {
-		if (userLocation) {
-			const position = await getUserPosition().catch((error) => {
-				toast.error(error.message);
-				return null;
-			});
-
-			if (position) {
-				await updateUserInfo(localStorage.token, { location: position });
-				toast.success($i18n.t('User location successfully retrieved.'));
-			} else {
-				userLocation = false;
-			}
-		}
-
-		saveSettings({ userLocation });
-	};
-
-	const toggleTitleAutoGenerate = async () => {
-		saveSettings({
-			title: {
-				...$settings.title,
-				auto: titleAutoGenerate
-			}
+const toggleUserLocation = async () => {
+	if (userLocation) {
+		const position = await getUserPosition().catch((error) => {
+			toast.error(error.message);
+			return null;
 		});
-	};
 
-	const toggleResponseAutoCopy = async () => {
-		const permission = await navigator.clipboard
-			.readText()
-			.then(() => {
-				return 'granted';
-			})
-			.catch(() => {
-				return '';
-			});
-
-		if (permission === 'granted') {
-			saveSettings({ responseAutoCopy: responseAutoCopy });
+		if (position) {
+			await updateUserInfo(localStorage.token, { location: position });
+			toast.success($i18n.t('User location successfully retrieved.'));
 		} else {
-			responseAutoCopy = false;
-			toast.error(
-				$i18n.t(
-					'Clipboard write permission denied. Please check your browser settings to grant the necessary access.'
-				)
-			);
+			userLocation = false;
 		}
-	};
+	}
 
-	const toggleChangeChatDirection = async () => {
-		if (chatDirection === 'auto') {
-			chatDirection = 'LTR';
-		} else if (chatDirection === 'LTR') {
-			chatDirection = 'RTL';
-		} else if (chatDirection === 'RTL') {
-			chatDirection = 'auto';
+	saveSettings({ userLocation });
+};
+
+const toggleTitleAutoGenerate = async () => {
+	saveSettings({
+		title: {
+			...$settings.title,
+			auto: titleAutoGenerate
 		}
-		saveSettings({ chatDirection });
-	};
-
-	const togglectrlEnterToSend = async () => {
-		ctrlEnterToSend = !ctrlEnterToSend;
-		saveSettings({ ctrlEnterToSend });
-	};
-
-	const updateInterfaceHandler = async () => {
-		saveSettings({
-			models: [defaultModelId],
-			imageCompressionSize: imageCompressionSize
-		});
-	};
-
-	const toggleWebSearch = async () => {
-		webSearch = webSearch === null ? 'always' : null;
-		saveSettings({ webSearch: webSearch });
-	};
-
-	const setTextScaleHandler = (scale) => {
-		textScale = scale;
-		setTextScale(textScale);
-
-		if (textScale === 1) {
-			textScale = null;
-		}
-		saveSettings({ textScale });
-	};
-
-	onMount(async () => {
-		titleAutoGenerate = $settings?.title?.auto ?? true;
-		autoTags = $settings?.autoTags ?? true;
-		autoFollowUps = $settings?.autoFollowUps ?? true;
-
-		highContrastMode = $settings?.highContrastMode ?? false;
-
-		detectArtifacts = $settings?.detectArtifacts ?? true;
-		responseAutoCopy = $settings?.responseAutoCopy ?? false;
-
-		showUsername = $settings?.showUsername ?? false;
-		showUpdateToast = $settings?.showUpdateToast ?? true;
-		showChangelog = $settings?.showChangelog ?? true;
-
-		showEmojiInCall = $settings?.showEmojiInCall ?? false;
-		voiceInterruption = $settings?.voiceInterruption ?? false;
-
-		displayMultiModelResponsesInTabs = $settings?.displayMultiModelResponsesInTabs ?? false;
-		chatFadeStreamingText = $settings?.chatFadeStreamingText ?? true;
-
-		richTextInput = $settings?.richTextInput ?? true;
-		showFormattingToolbar = $settings?.showFormattingToolbar ?? false;
-		insertPromptAsRichText = $settings?.insertPromptAsRichText ?? false;
-		promptAutocomplete = $settings?.promptAutocomplete ?? false;
-
-		insertSuggestionPrompt = $settings?.insertSuggestionPrompt ?? false;
-		keepFollowUpPrompts = $settings?.keepFollowUpPrompts ?? false;
-		insertFollowUpPrompt = $settings?.insertFollowUpPrompt ?? false;
-
-		regenerateMenu = $settings?.regenerateMenu ?? true;
-		enableMessageQueue = $settings?.enableMessageQueue ?? true;
-
-		largeTextAsFile = $settings?.largeTextAsFile ?? false;
-		copyFormatted = $settings?.copyFormatted ?? false;
-
-		collapseCodeBlocks = $settings?.collapseCodeBlocks ?? false;
-		expandDetails = $settings?.expandDetails ?? false;
-		renderMarkdownInPreviews = $settings?.renderMarkdownInPreviews ?? true;
-
-		landingPageMode = $settings?.landingPageMode ?? '';
-		chatBubble = $settings?.chatBubble ?? true;
-		widescreenMode = $settings?.widescreenMode ?? false;
-		splitLargeChunks = $settings?.splitLargeChunks ?? false;
-		scrollOnBranchChange = $settings?.scrollOnBranchChange ?? true;
-
-		temporaryChatByDefault = $settings?.temporaryChatByDefault ?? false;
-		chatDirection = $settings?.chatDirection ?? 'auto';
-		userLocation = $settings?.userLocation ?? false;
-		showChatTitleInTab = $settings?.showChatTitleInTab ?? true;
-
-		notificationSound = $settings?.notificationSound ?? true;
-		notificationSoundAlways = $settings?.notificationSoundAlways ?? false;
-
-		iframeSandboxAllowSameOrigin = $settings?.iframeSandboxAllowSameOrigin ?? false;
-		iframeSandboxAllowForms = $settings?.iframeSandboxAllowForms ?? false;
-
-		stylizedPdfExport = $settings?.stylizedPdfExport ?? true;
-
-		hapticFeedback = $settings?.hapticFeedback ?? false;
-		ctrlEnterToSend = $settings?.ctrlEnterToSend ?? false;
-
-		showFloatingActionButtons = $settings?.showFloatingActionButtons ?? true;
-		floatingActionButtons = $settings?.floatingActionButtons ?? null;
-
-		imageCompression = $settings?.imageCompression ?? false;
-		imageCompressionSize = $settings?.imageCompressionSize ?? { width: '', height: '' };
-		imageCompressionInChannels = $settings?.imageCompressionInChannels ?? true;
-
-		defaultModelId = $settings?.models?.at(0) ?? '';
-		if ($config?.default_models) {
-			defaultModelId = $config.default_models.split(',')[0];
-		}
-
-		backgroundImageUrl = $settings?.backgroundImageUrl ?? null;
-		webSearch = $settings?.webSearch ?? null;
-
-		textScale = $settings?.textScale ?? null;
 	});
+};
+
+const toggleResponseAutoCopy = async () => {
+	const permission = await navigator.clipboard
+		.readText()
+		.then(() => {
+			return 'granted';
+		})
+		.catch(() => {
+			return '';
+		});
+
+	if (permission === 'granted') {
+		saveSettings({ responseAutoCopy: responseAutoCopy });
+	} else {
+		responseAutoCopy = false;
+		toast.error(
+			$i18n.t(
+				'Clipboard write permission denied. Please check your browser settings to grant the necessary access.'
+			)
+		);
+	}
+};
+
+const toggleChangeChatDirection = async () => {
+	if (chatDirection === 'auto') {
+		chatDirection = 'LTR';
+	} else if (chatDirection === 'LTR') {
+		chatDirection = 'RTL';
+	} else if (chatDirection === 'RTL') {
+		chatDirection = 'auto';
+	}
+	saveSettings({ chatDirection });
+};
+
+const togglectrlEnterToSend = async () => {
+	ctrlEnterToSend = !ctrlEnterToSend;
+	saveSettings({ ctrlEnterToSend });
+};
+
+const toggleEnterToSendMobile = async () => {
+	enterToSendMobile = !enterToSendMobile;
+	saveSettings({ enterToSendMobile });
+};
+
+const updateInterfaceHandler = async () => {
+	saveSettings({
+		models: [defaultModelId],
+		imageCompressionSize: imageCompressionSize
+	});
+};
+
+const toggleWebSearch = async () => {
+	webSearch = webSearch === null ? 'always' : null;
+	saveSettings({ webSearch: webSearch });
+};
+
+const setTextScaleHandler = (scale) => {
+	textScale = scale;
+	setTextScale(textScale);
+
+	if (textScale === 1) {
+		textScale = null;
+	}
+	saveSettings({ textScale });
+};
+
+onMount(async () => {
+	titleAutoGenerate = $settings?.title?.auto ?? true;
+	autoTags = $settings?.autoTags ?? true;
+	autoFollowUps = $settings?.autoFollowUps ?? true;
+
+	highContrastMode = $settings?.highContrastMode ?? false;
+
+	detectArtifacts = $settings?.detectArtifacts ?? true;
+	responseAutoCopy = $settings?.responseAutoCopy ?? false;
+
+	showUsername = $settings?.showUsername ?? false;
+	showUpdateToast = $settings?.showUpdateToast ?? true;
+	showChangelog = $settings?.showChangelog ?? true;
+
+	showEmojiInCall = $settings?.showEmojiInCall ?? false;
+	voiceInterruption = $settings?.voiceInterruption ?? false;
+
+	displayMultiModelResponsesInTabs = $settings?.displayMultiModelResponsesInTabs ?? false;
+	chatFadeStreamingText = $settings?.chatFadeStreamingText ?? true;
+
+	richTextInput = $settings?.richTextInput ?? true;
+	showFormattingToolbar = $settings?.showFormattingToolbar ?? false;
+	insertPromptAsRichText = $settings?.insertPromptAsRichText ?? false;
+	promptAutocomplete = $settings?.promptAutocomplete ?? false;
+
+	insertSuggestionPrompt = $settings?.insertSuggestionPrompt ?? false;
+	keepFollowUpPrompts = $settings?.keepFollowUpPrompts ?? false;
+	insertFollowUpPrompt = $settings?.insertFollowUpPrompt ?? false;
+
+	regenerateMenu = $settings?.regenerateMenu ?? true;
+	enableMessageQueue = $settings?.enableMessageQueue ?? true;
+
+	largeTextAsFile = $settings?.largeTextAsFile ?? false;
+	copyFormatted = $settings?.copyFormatted ?? false;
+
+	collapseCodeBlocks = $settings?.collapseCodeBlocks ?? false;
+	expandDetails = $settings?.expandDetails ?? false;
+	renderMarkdownInPreviews = $settings?.renderMarkdownInPreviews ?? true;
+
+	landingPageMode = $settings?.landingPageMode ?? '';
+	chatBubble = $settings?.chatBubble ?? true;
+	widescreenMode = $settings?.widescreenMode ?? false;
+	splitLargeChunks = $settings?.splitLargeChunks ?? false;
+	scrollOnBranchChange = $settings?.scrollOnBranchChange ?? true;
+
+	temporaryChatByDefault = $settings?.temporaryChatByDefault ?? false;
+	chatDirection = $settings?.chatDirection ?? 'auto';
+	userLocation = $settings?.userLocation ?? false;
+	showChatTitleInTab = $settings?.showChatTitleInTab ?? true;
+
+	notificationSound = $settings?.notificationSound ?? true;
+	notificationSoundAlways = $settings?.notificationSoundAlways ?? false;
+
+	iframeSandboxAllowSameOrigin = $settings?.iframeSandboxAllowSameOrigin ?? false;
+	iframeSandboxAllowForms = $settings?.iframeSandboxAllowForms ?? false;
+
+	stylizedPdfExport = $settings?.stylizedPdfExport ?? true;
+
+	hapticFeedback = $settings?.hapticFeedback ?? false;
+	ctrlEnterToSend = $settings?.ctrlEnterToSend ?? false;
+	enterToSendMobile = $settings?.enterToSendMobile ?? false;
+
+	showFloatingActionButtons = $settings?.showFloatingActionButtons ?? true;
+	floatingActionButtons = $settings?.floatingActionButtons ?? null;
+
+	imageCompression = $settings?.imageCompression ?? false;
+	imageCompressionSize = $settings?.imageCompressionSize ?? { width: '', height: '' };
+	imageCompressionInChannels = $settings?.imageCompressionInChannels ?? true;
+
+	defaultModelId = $settings?.models?.at(0) ?? '';
+	if ($config?.default_models) {
+		defaultModelId = $config.default_models.split(',')[0];
+	}
+
+	backgroundImageUrl = $settings?.backgroundImageUrl ?? null;
+	webSearch = $settings?.webSearch ?? null;
+
+	textScale = $settings?.textScale ?? null;
+});
 </script>
 
 <ManageFloatingActionButtonsModal
@@ -1115,6 +1122,29 @@
 							>{ctrlEnterToSend === true
 								? $i18n.t('Ctrl+Enter to Send')
 								: $i18n.t('Enter to Send')}</span
+						>
+					</button>
+				</div>
+			</div>
+
+			<div>
+				<div class=" py-0.5 flex w-full justify-between">
+					<div id="mobile-enter-key-behavior-label" class=" self-center text-xs">
+						{$i18n.t('Mobile Enter Key Behavior')}
+					</div>
+
+					<button
+						aria-labelledby="mobile-enter-key-behavior-label"
+						class="p-1 px-3 text-xs flex rounded transition"
+						on:click={() => {
+							toggleEnterToSendMobile();
+						}}
+						type="button"
+					>
+						<span class="ml-2 self-center"
+							>{enterToSendMobile === true
+								? $i18n.t('Enter to Send')
+								: $i18n.t('Enter for Newline')}</span
 						>
 					</button>
 				</div>
