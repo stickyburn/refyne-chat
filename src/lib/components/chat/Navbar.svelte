@@ -1,64 +1,71 @@
 <script lang="ts">
-	import { getContext } from 'svelte';
-	import { toast } from 'svelte-sonner';
+import { getContext } from 'svelte';
+import { toast } from 'svelte-sonner';
 
-	import {
-		WEBUI_NAME,
-		banners,
-		chatId,
-		config,
-		mobile,
-		settings,
-		showArchivedChats,
-		showControls,
-		showSidebar,
-		temporaryChatEnabled,
-		user
-	} from '$lib/stores';
+import {
+	WEBUI_NAME,
+	banners,
+	chatId,
+	config,
+	mobile,
+	settings,
+	showArchivedChats,
+	showControls,
+	showSidebar,
+	temporaryChatEnabled,
+	user
+} from '$lib/stores';
 
-	import { slide } from 'svelte/transition';
-	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
+import { goto } from '$app/navigation';
+import { page } from '$app/stores';
+import { createEventDispatcher } from 'svelte';
+import { slide } from 'svelte/transition';
 
-	import ShareChatModal from '../chat/ShareChatModal.svelte';
-	import ModelSelector from '../chat/ModelSelector.svelte';
-	import Tooltip from '../common/Tooltip.svelte';
-	import Menu from '$lib/components/layout/Navbar/Menu.svelte';
-	import UserMenu from '$lib/components/layout/Sidebar/UserMenu.svelte';
-	import AdjustmentsHorizontal from '../icons/AdjustmentsHorizontal.svelte';
+import Menu from '$lib/components/layout/Navbar/Menu.svelte';
+import UserMenu from '$lib/components/layout/Sidebar/UserMenu.svelte';
+import ModelSelector from '../chat/ModelSelector.svelte';
+import ShareChatModal from '../chat/ShareChatModal.svelte';
+import Tooltip from '../common/Tooltip.svelte';
+import AdjustmentsHorizontal from '../icons/AdjustmentsHorizontal.svelte';
 
-	import PencilSquare from '../icons/PencilSquare.svelte';
-	import Banner from '../common/Banner.svelte';
-	import Sidebar from '../icons/Sidebar.svelte';
+import Banner from '../common/Banner.svelte';
+import Sidebar from '../icons/Sidebar.svelte';
 
-	import ChatBubbleDotted from '../icons/ChatBubbleDotted.svelte';
-	import ChatBubbleDottedChecked from '../icons/ChatBubbleDottedChecked.svelte';
+import GhostIcon from '../icons/GhostIcon.svelte';
 
-	import EllipsisHorizontal from '../icons/EllipsisHorizontal.svelte';
-	import ChatPlus from '../icons/ChatPlus.svelte';
-	import ChatCheck from '../icons/ChatCheck.svelte';
-	import Knobs from '../icons/Knobs.svelte';
-	import { WEBUI_API_BASE_URL } from '$lib/constants';
+import { WEBUI_API_BASE_URL } from '$lib/constants';
+import ChatCheck from '../icons/ChatCheck.svelte';
+import ChatPlus from '../icons/ChatPlus.svelte';
+import EllipsisHorizontal from '../icons/EllipsisHorizontal.svelte';
+import Knobs from '../icons/Knobs.svelte';
 
-	const i18n = getContext('i18n');
+const i18n = getContext('i18n');
+const dispatch = createEventDispatcher();
 
-	export let initNewChat: Function;
-	export let shareEnabled: boolean = false;
-	export let scrollTop = 0;
+export let initNewChat: Function;
+export let shareEnabled = false;
+export let scrollTop = 0;
 
-	export let chat;
-	export let history;
-	export let selectedModels;
-	export let showModelSelector = true;
+export let hidden = false;
 
-	export let onSaveTempChat: () => {};
-	export let archiveChatHandler: (id: string) => void;
-	export let moveChatHandler: (id: string, folderId: string) => void;
+export let chat;
+export let history;
+export let selectedModels;
+export let showModelSelector = true;
 
-	let closedBannerIds = [];
+export let onSaveTempChat: () => {};
+export let archiveChatHandler: (id: string) => void;
+export let moveChatHandler: (id: string, folderId: string) => void;
 
-	let showShareChatModal = false;
-	let showDownloadChatModal = false;
+let closedBannerIds = [];
+
+let showShareChatModal = false;
+let showDownloadChatModal = false;
+let dropdownOpen = false;
+
+$: if (dropdownOpen && hidden) {
+	dispatch('dropdownOpen');
+}
 </script>
 
 <ShareChatModal bind:show={showShareChatModal} chatId={$chatId} />
@@ -75,7 +82,9 @@
 <nav
 	class="sticky top-0 z-30 w-full {chat?.id
 		? 'pt-0.5 pb-1'
-		: 'pt-1 pb-1'} -mb-12 flex flex-col items-center drag-region"
+		: 'pt-1 pb-1'} -mb-12 flex flex-col items-center drag-region transition-transform duration-200 {hidden
+		? '-translate-y-full'
+		: 'translate-y-0'} focus-within:translate-y-0 hover:translate-y-0"
 >
 	<div class="flex items-center w-full pl-1.5 pr-1">
 		<div
@@ -107,16 +116,22 @@
 				{/if}
 
 				<div
-					class="flex-1 overflow-hidden max-w-full mt-0.5 py-0.5
+					class="flex-1 overflow-hidden max-w-full py-0.5
 			{$showSidebar ? 'ml-1' : ''}
 			"
 				>
 					{#if showModelSelector}
-						<ModelSelector bind:selectedModels showSetDefault={!shareEnabled} />
+						<ModelSelector
+							bind:selectedModels
+							showSetDefault={!shareEnabled}
+							on:openChange={(e) => {
+								dropdownOpen = e.detail;
+							}}
+						/>
 					{/if}
 				</div>
 
-				<div class="self-start flex flex-none items-center text-gray-600 dark:text-gray-400">
+				<div class="flex flex-none items-center text-gray-600 dark:text-gray-400">
 					<!-- <div class="md:hidden flex self-center w-[1px] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 
 					{#if $user?.role === 'user' ? ($user?.permissions?.chat?.temporary ?? true) && !($user?.permissions?.chat?.temporary_enforced ?? false) : true}
@@ -146,13 +161,9 @@
 									}}
 								>
 									<div class=" m-auto self-center">
-										{#if $temporaryChatEnabled}
-											<ChatBubbleDottedChecked className=" size-4.5" strokeWidth="1.5" />
-										{:else}
-											<ChatBubbleDotted className=" size-4.5" strokeWidth="1.5" />
-										{/if}
-									</div>
-								</button>
+									<GhostIcon className="size-6" strokeWidth="1.2" active={$temporaryChatEnabled} />
+								</div>
+							</button>
 							</Tooltip>
 						{:else if $temporaryChatEnabled}
 							<Tooltip content={$i18n.t(`Save Chat`)}>
@@ -212,7 +223,7 @@
 						</Menu>
 					{/if}
 
-					{#if $user?.role === 'admin' || ($user?.permissions.chat?.controls ?? true)}
+					{#if $user?.permissions.chat?.controls ?? true}
 						<Tooltip content={$i18n.t('Controls')}>
 							<button
 								class=" flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
