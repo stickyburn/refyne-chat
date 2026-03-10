@@ -1,7 +1,7 @@
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { sveltekit } from "@sveltejs/kit/vite";
+import { defineConfig } from "vite";
 
-import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default defineConfig({
 	plugins: [
@@ -9,24 +9,30 @@ export default defineConfig({
 		viteStaticCopy({
 			targets: [
 				{
-					src: 'node_modules/onnxruntime-web/dist/*.jsep.*',
-
-					dest: 'wasm'
-				}
-			]
-		})
+					src: "node_modules/onnxruntime-web/dist/*.jsep.*",
+					dest: "wasm",
+				},
+			],
+		}),
 	],
+	server: {
+		port: 5000,
+		host: "0.0.0.0",
+	},
 	define: {
 		APP_VERSION: JSON.stringify(process.env.npm_package_version),
-		APP_BUILD_HASH: JSON.stringify(process.env.APP_BUILD_HASH || 'dev-build')
+		APP_BUILD_HASH: JSON.stringify(process.env.APP_BUILD_HASH || "dev-build"),
 	},
 	build: {
-		sourcemap: true
+		sourcemap: true,
 	},
 	worker: {
-		format: 'es'
+		format: "es",
 	},
 	esbuild: {
-		pure: process.env.ENV === 'dev' ? [] : ['console.log', 'console.debug', 'console.error']
-	}
+		pure:
+			process.env.ENV === "dev"
+				? []
+				: ["console.log", "console.debug", "console.error"],
+	},
 });
