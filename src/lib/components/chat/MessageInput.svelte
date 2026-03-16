@@ -1186,7 +1186,9 @@
 								recording = false;
 
 								await tick();
-								document.getElementById('chat-input')?.focus();
+								if (!$mobile) {
+									document.getElementById('chat-input')?.focus();
+								}
 							}}
 							onConfirm={async (data) => {
 								const { text, filename } = data;
@@ -1196,7 +1198,9 @@
 								await tick();
 								await insertTextAtCursor(`${text}`);
 								await tick();
-								document.getElementById('chat-input')?.focus();
+								if (!$mobile) {
+									document.getElementById('chat-input')?.focus();
+								}
 
 								if ($settings?.speechAutoSend ?? false) {
 									dispatch('submit', prompt);

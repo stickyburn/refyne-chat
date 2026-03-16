@@ -453,12 +453,12 @@
 					}
 
 					if ($isLastActiveTab) {
-						if ($settings?.notificationEnabled ?? false) {
-							new Notification(`${displayTitle} • Open WebUI`, {
-								body: content,
-								icon: `${WEBUI_BASE_URL}/static/favicon.png`
-							});
-						}
+					if ($settings?.notificationEnabled ?? false) {
+						new Notification(`${displayTitle} • Refyne`, {
+							body: content,
+							icon: `${WEBUI_BASE_URL}/static/favicon.png`
+						});
+					}
 					}
 
 					toast.custom(NotificationToast, {
@@ -657,7 +657,7 @@
 
 				if ($isLastActiveTab) {
 					if ($settings?.notificationEnabled ?? false) {
-						new Notification(`${title} • Open WebUI`, {
+						new Notification(`${title} • Refyne`, {
 							body: data?.content,
 							icon: `${WEBUI_API_BASE_URL}/users/${data?.user?.id}/profile/image`
 						});

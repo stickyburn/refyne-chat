@@ -558,7 +558,9 @@ const submitHandler = async () => {
 
 		await tick();
 
-		chatInputElement.focus();
+		if (!$mobile) {
+			chatInputElement.focus();
+		}
 	}
 };
 
@@ -747,7 +749,7 @@ onDestroy(() => {
 
 							await tick();
 
-							if (chatInputElement) {
+							if (chatInputElement && !$mobile) {
 								chatInputElement.focus();
 							}
 						}}
@@ -760,7 +762,7 @@ onDestroy(() => {
 
 							await tick();
 
-							if (chatInputElement) {
+							if (chatInputElement && !$mobile) {
 								chatInputElement.focus();
 							}
 						}}
