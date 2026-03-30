@@ -61,6 +61,8 @@ export let onChange = (e) => {};
 
 export let toolServers = [];
 
+export let dragged = false;
+
 let models = [];
 let selectedModelIdx = 0;
 
