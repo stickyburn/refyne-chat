@@ -1,63 +1,63 @@
 <script lang="ts">
-	import Fuse from 'fuse.js';
+import Fuse from 'fuse.js';
 
-	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
-	import { tick, getContext } from 'svelte';
+import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+import { getContext, tick } from 'svelte';
 
-	import { models } from '$lib/stores';
-	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
-	import Tooltip from '$lib/components/common/Tooltip.svelte';
+import Tooltip from '$lib/components/common/Tooltip.svelte';
+import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
+import { models } from '$lib/stores';
 
-	const i18n = getContext('i18n');
+const i18n = getContext('i18n');
 
-	export let query = '';
-	export let onSelect = (e) => {};
+export let query = '';
+export let onSelect = (e) => {};
 
-	let selectedIdx = 0;
-	export let filteredItems = [];
+let selectedIdx = 0;
+export let filteredItems = [];
 
-	let fuse = new Fuse(
-		$models
-			.filter((model) => !model?.info?.meta?.hidden)
-			.map((model) => {
-				const _item = {
-					...model,
-					modelName: model?.name,
-					tags: model?.info?.meta?.tags?.map((tag) => tag.name).join(' '),
-					desc: model?.info?.meta?.description
-				};
-				return _item;
-			}),
-		{
-			keys: ['value', 'tags', 'modelName'],
-			threshold: 0.5
-		}
-	);
-
-	$: filteredItems = query
-		? fuse.search(query).map((e) => {
-				return e.item;
-			})
-		: $models.filter((model) => !model?.info?.meta?.hidden);
-
-	$: if (query) {
-		selectedIdx = 0;
+let fuse = new Fuse(
+	$models
+		.filter((model) => !model?.info?.meta?.hidden)
+		.map((model) => {
+			const _item = {
+				...model,
+				modelName: model?.name,
+				tags: model?.info?.meta?.tags?.map((tag) => tag.name).join(' '),
+				desc: model?.info?.meta?.description
+			};
+			return _item;
+		}),
+	{
+		keys: ['value', 'tags', 'modelName'],
+		threshold: 0.5
 	}
+);
 
-	export const selectUp = () => {
-		selectedIdx = Math.max(0, selectedIdx - 1);
-	};
+$: filteredItems = query
+	? fuse.search(query).map((e) => {
+			return e.item;
+		})
+	: $models.filter((model) => !model?.info?.meta?.hidden);
 
-	export const selectDown = () => {
-		selectedIdx = Math.min(selectedIdx + 1, filteredItems.length - 1);
-	};
+$: if (query) {
+	selectedIdx = 0;
+}
 
-	export const select = async () => {
-		const model = filteredItems[selectedIdx];
-		if (model) {
-			onSelect({ type: 'model', data: model });
-		}
-	};
+export const selectUp = () => {
+	selectedIdx = Math.max(0, selectedIdx - 1);
+};
+
+export const selectDown = () => {
+	selectedIdx = Math.min(selectedIdx + 1, filteredItems.length - 1);
+};
+
+export const select = async () => {
+	const model = filteredItems[selectedIdx];
+	if (model) {
+		onSelect({ type: 'model', data: model });
+	}
+};
 </script>
 
 <div class="px-2 text-xs text-gray-500 py-1">
@@ -83,11 +83,13 @@
 			>
 				<div class="flex text-black dark:text-gray-100 line-clamp-1">
 					<img
-						src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}`}
+						src={model.meta?.profile_image_url && model.meta?.profile_image_url !== '/static/favicon.png'
+							? `${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}`
+							: '/static/model-placeholder.webp'}
 						alt={model?.name ?? model.id}
 						class="rounded-full size-5 items-center mr-2"
 						on:error={(e) => {
-							e.currentTarget.src = '/favicon.png';
+							e.currentTarget.src = '/static/model-placeholder.webp';
 						}}
 					/>
 					<div class="truncate">

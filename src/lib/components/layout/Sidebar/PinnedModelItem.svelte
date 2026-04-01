@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { getContext } from 'svelte';
+import { getContext } from 'svelte';
 
-	const i18n = getContext('i18n');
+const i18n = getContext('i18n');
 
-	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
+import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 
-	import Tooltip from '$lib/components/common/Tooltip.svelte';
-	import PinSlash from '$lib/components/icons/PinSlash.svelte';
+import Tooltip from '$lib/components/common/Tooltip.svelte';
+import PinSlash from '$lib/components/icons/PinSlash.svelte';
 
-	export let model = null;
-	export let shiftKey = false;
-	export let onClick = () => {};
-	export let onUnpin = () => {};
+export let model = null;
+export let shiftKey = false;
+export let onClick = () => {};
+export let onUnpin = () => {};
 
-	let mouseOver = false;
+let mouseOver = false;
 </script>
 
 {#if model}
@@ -36,11 +36,13 @@
 		>
 			<div class="self-center shrink-0">
 				<img
-					src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}`}
+					src={model.meta?.profile_image_url && model.meta?.profile_image_url !== '/static/favicon.png'
+						? `${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}`
+						: '/static/model-placeholder.webp'}
 					class=" size-5 rounded-full -translate-x-[0.5px]"
 					alt="logo"
 					on:error={(e) => {
-						e.currentTarget.src = '/favicon.png';
+						e.currentTarget.src = '/static/model-placeholder.webp';
 					}}
 				/>
 			</div>

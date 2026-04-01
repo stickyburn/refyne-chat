@@ -1,46 +1,46 @@
 <script lang="ts">
-	import { marked } from 'marked';
+import { marked } from 'marked';
 
-	import { getContext, tick } from 'svelte';
-	import dayjs from '$lib/dayjs';
+import dayjs from '$lib/dayjs';
+import { getContext, tick } from 'svelte';
 
-	import { mobile, settings, user } from '$lib/stores';
-	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
+import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
+import { mobile, settings, user } from '$lib/stores';
 
-	import Tooltip from '$lib/components/common/Tooltip.svelte';
-	import { copyToClipboard, sanitizeResponseContent } from '$lib/utils';
-	import ArrowUpTray from '$lib/components/icons/ArrowUpTray.svelte';
-	import Check from '$lib/components/icons/Check.svelte';
-	import ModelItemMenu from './ModelItemMenu.svelte';
-	import EllipsisHorizontal from '$lib/components/icons/EllipsisHorizontal.svelte';
-	import { toast } from 'svelte-sonner';
-	import Tag from '$lib/components/icons/Tag.svelte';
-	import Label from '$lib/components/icons/Label.svelte';
+import Tooltip from '$lib/components/common/Tooltip.svelte';
+import ArrowUpTray from '$lib/components/icons/ArrowUpTray.svelte';
+import Check from '$lib/components/icons/Check.svelte';
+import EllipsisHorizontal from '$lib/components/icons/EllipsisHorizontal.svelte';
+import Label from '$lib/components/icons/Label.svelte';
+import Tag from '$lib/components/icons/Tag.svelte';
+import { copyToClipboard, sanitizeResponseContent } from '$lib/utils';
+import { toast } from 'svelte-sonner';
+import ModelItemMenu from './ModelItemMenu.svelte';
 
-	const i18n = getContext('i18n');
+const i18n = getContext('i18n');
 
-	export let selectedModelIdx: number = -1;
-	export let item: any = {};
-	export let index: number = -1;
-	export let value: string = '';
+export let selectedModelIdx = -1;
+export let item: any = {};
+export let index = -1;
+export let value = '';
 
-	export let unloadModelHandler: (modelValue: string) => void = () => {};
-	export let pinModelHandler: (modelId: string) => void = () => {};
+export let unloadModelHandler: (modelValue: string) => void = () => {};
+export let pinModelHandler: (modelId: string) => void = () => {};
 
-	export let onClick: () => void = () => {};
+export let onClick: () => void = () => {};
 
-	const copyLinkHandler = async (model) => {
-		const baseUrl = window.location.origin;
-		const res = await copyToClipboard(`${baseUrl}/?model=${encodeURIComponent(model.id)}`);
+const copyLinkHandler = async (model) => {
+	const baseUrl = window.location.origin;
+	const res = await copyToClipboard(`${baseUrl}/?model=${encodeURIComponent(model.id)}`);
 
-		if (res) {
-			toast.success($i18n.t('Copied link to clipboard'));
-		} else {
-			toast.error($i18n.t('Failed to copy link'));
-		}
-	};
+	if (res) {
+		toast.success($i18n.t('Copied link to clipboard'));
+	} else {
+		toast.error($i18n.t('Failed to copy link'));
+	}
+};
 
-	let showMenu = false;
+let showMenu = false;
 </script>
 
 <button
@@ -78,12 +78,15 @@
 			<div class="flex items-center min-w-fit">
 				<Tooltip content={$user?.role === 'admin' ? (item?.value ?? '') : ''} placement="top-start">
 					<img
-						src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${item.model.id}&lang=${$i18n.language}`}
+						src={item.model.meta?.profile_image_url &&
+						item.model.meta?.profile_image_url !== '/static/favicon.png'
+							? `${WEBUI_API_BASE_URL}/models/model/profile/image?id=${item.model.id}&lang=${$i18n.language}`
+							: '/static/model-placeholder.webp'}
 						alt={$i18n.t('{{modelName}} profile image', { modelName: item.label })}
 						class="rounded-full size-5 flex items-center"
 						loading="lazy"
 						on:error={(e) => {
-							e.currentTarget.src = '/favicon.png';
+							e.currentTarget.src = '/static/model-placeholder.webp';
 						}}
 					/>
 				</Tooltip>
