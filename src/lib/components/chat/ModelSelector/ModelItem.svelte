@@ -79,12 +79,15 @@
 			<div class="flex items-center min-w-fit">
 				<Tooltip content={$user?.role === 'admin' ? (item?.value ?? '') : ''} placement="top-start">
 					<img
-						src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${item.model.id}&lang=${$i18n.language}`}
+						src={item.model.meta?.profile_image_url &&
+						item.model.meta?.profile_image_url !== '/static/favicon.png'
+							? `${WEBUI_API_BASE_URL}/models/model/profile/image?id=${item.model.id}&lang=${$i18n.language}`
+							: '/static/model-placeholder.webp'}
 						alt={$i18n.t('{{modelName}} profile image', { modelName: item.label })}
 						class="rounded-full size-5 flex items-center"
 						loading="lazy"
 						on:error={(e) => {
-							e.currentTarget.src = '/favicon.png';
+							e.currentTarget.src = '/static/model-placeholder.webp';
 						}}
 					/>
 				</Tooltip>

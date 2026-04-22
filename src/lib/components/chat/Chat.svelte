@@ -135,6 +135,14 @@
 	let eventConfirmationInputType = '';
 	let eventCallback = null;
 
+	let navbarHidden = false;
+	let previousScrollTop = 0;
+	const SCROLL_THRESHOLD = 50;
+
+	function handleNavbarDropdownOpen() {
+		navbarHidden = false;
+	}
+
 	let selectedModels = [''];
 	let atSelectedModel: Model | undefined;
 	let selectedModelIds = [];
@@ -2843,6 +2851,8 @@
 					<FilesOverlay show={dragged} />
 					<Navbar
 						bind:this={navbarElement}
+						hidden={navbarHidden}
+						on:dropdownOpen={handleNavbarDropdownOpen}
 						chat={{
 							id: $chatId,
 							chat: {
@@ -2910,6 +2920,18 @@
 									autoScroll =
 										messagesContainerElement.scrollHeight - messagesContainerElement.scrollTop <=
 										messagesContainerElement.clientHeight + 5;
+
+									const currentScrollTop = messagesContainerElement.scrollTop;
+									const scrollDiff = currentScrollTop - previousScrollTop;
+									previousScrollTop = currentScrollTop;
+
+									if (currentScrollTop < SCROLL_THRESHOLD) {
+										navbarHidden = false;
+									} else if (scrollDiff > 0) {
+										navbarHidden = true;
+									} else if (scrollDiff < -2) {
+										navbarHidden = false;
+									}
 								}}
 							>
 								<div class=" h-full w-full flex flex-col">

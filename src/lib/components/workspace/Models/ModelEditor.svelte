@@ -7,7 +7,6 @@
 
 	import { getTools } from '$lib/apis/tools';
 	import { getFunctions } from '$lib/apis/functions';
-	import { getModelsDefaults } from '$lib/apis/configs';
 
 	import AdvancedParams from '$lib/components/chat/Settings/Advanced/AdvancedParams.svelte';
 	import Tags from '$lib/components/common/Tags.svelte';
@@ -76,7 +75,7 @@
 		base_model_id: null,
 		name: '',
 		meta: {
-			profile_image_url: `${WEBUI_BASE_URL}/static/favicon.png`,
+			profile_image_url: '/static/model-placeholder.webp',
 			description: '',
 			suggestion_prompts: null,
 			tags: []
@@ -250,16 +249,6 @@
 		await tools.set(await getTools(localStorage.token));
 		await functions.set(await getFunctions(localStorage.token));
 
-		// Fetch admin-configured default model metadata so the editor
-		// reflects the actual defaults rather than hardcoded values
-		const modelsConfig = await getModelsDefaults(localStorage.token).catch(() => null);
-		const defaultMeta = modelsConfig?.DEFAULT_MODEL_METADATA ?? {};
-
-		// Use admin defaults as base, falling back to hardcoded defaults
-		capabilities = { ...DEFAULT_CAPABILITIES, ...(defaultMeta.capabilities ?? {}) };
-		defaultFeatureIds = defaultMeta.defaultFeatureIds ?? [];
-		builtinTools = defaultMeta.builtinTools ?? {};
-
 		// Scroll to top 'workspace-container' element
 		const workspaceContainer = document.getElementById('workspace-container');
 		if (workspaceContainer) {
@@ -359,7 +348,6 @@
 		accessRoles={preset ? ['read', 'write'] : ['read']}
 		share={$user?.permissions?.sharing?.models || $user?.role === 'admin'}
 		sharePublic={$user?.permissions?.sharing?.public_models || $user?.role === 'admin'}
-		shareUsers={($user?.permissions?.access_grants?.allow_users ?? true) || $user?.role === 'admin'}
 		onChange={async () => {
 			if (edit && model?.id) {
 				try {
@@ -493,7 +481,7 @@
 							<div class="self-center">
 								<button
 									class="rounded-2xl flex shrink-0 items-center {info.meta.profile_image_url !==
-									`${WEBUI_BASE_URL}/static/favicon.png`
+									'/static/model-placeholder.webp'
 										? 'bg-transparent'
 										: 'bg-white'} shadow-xl group relative"
 									type="button"
@@ -510,7 +498,7 @@
 										/>
 									{:else}
 										<img
-											src="{WEBUI_BASE_URL}/static/favicon.png"
+											src="/static/model-placeholder.webp"
 											alt="model profile"
 											class=" rounded-xl size-20 md:size-48 object-cover shrink-0"
 										/>
@@ -546,7 +534,7 @@
 									<button
 										class="px-2 py-1 text-gray-500 rounded-lg text-xs"
 										on:click={() => {
-											info.meta.profile_image_url = `${WEBUI_BASE_URL}/static/favicon.png`;
+											info.meta.profile_image_url = '/static/model-placeholder.webp';
 										}}
 										type="button"
 									>

@@ -646,7 +646,7 @@
 		loaded = true;
 
 		window.setTimeout(() => {
-			if (chatInputElement) {
+			if (chatInputElement && !) {
 				chatInputElement.focus();
 			}
 		}, 100);

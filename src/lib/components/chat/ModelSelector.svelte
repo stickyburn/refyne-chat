@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { models, showSettings, settings, user, mobile, config } from '$lib/stores';
-	import { onMount, tick, getContext } from 'svelte';
+	import { onMount, tick, getContext, createEventDispatcher } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import Selector from './ModelSelector/Selector.svelte';
 	import Tooltip from '../common/Tooltip.svelte';
 
 	import { updateUserSettings } from '$lib/apis/users';
 	import equal from 'fast-deep-equal';
-	const i18n = getContext('i18n');
+	const dispatch = createEventDispatcher();
 
 	export let selectedModels = [''];
 	export let disabled = false;
@@ -26,7 +26,9 @@
 		toast.success($i18n.t('Default model updated'));
 	};
 
-	const pinModelHandler = async (modelId) => {
+	const isCurrentModelDefault = (modelId: string) => {
+		return ($settings?.models ?? []).includes(modelId);
+	};
 		let pinnedModels = $settings?.pinnedModels ?? [];
 
 		if (pinnedModels.includes(modelId)) {
@@ -65,11 +67,12 @@
 						}))}
 						{pinModelHandler}
 						bind:value={selectedModel}
+						on:openChange={(e) => dispatch('openChange', e.detail)}
 					/>
 				</div>
 			</div>
 
-			{#if $user?.role === 'admin' || ($user?.permissions?.chat?.multiple_models ?? true)}
+			{#if $user?.permissions?.chat?.multiple_models ?? true}
 				{#if selectedModelIdx === 0}
 					<div
 						class="  self-center mx-1 disabled:text-gray-600 disabled:hover:text-gray-600 -translate-y-[0.5px]"
@@ -128,9 +131,9 @@
 	{/each}
 </div>
 
-{#if showSetDefault}
+{#if showSetDefault && !isCurrentModelDefault(selectedModels[0])}
 	<div
-		class="relative text-left mt-[1px] ml-1 text-[0.7rem] text-gray-600 dark:text-gray-400 font-primary"
+		class="relative text-left mt-px ml-1 text-[0.7rem] text-gray-600 dark:text-gray-400 font-primary"
 	>
 		<button on:click={saveDefaultModel}> {$i18n.t('Set as default')}</button>
 	</div>
