@@ -1,329 +1,355 @@
 <script lang="ts">
-import { toast } from 'svelte-sonner';
+	import { toast } from 'svelte-sonner';
 
-import { DEFAULT_CAPABILITIES, WEBUI_BASE_URL } from '$lib/constants';
-import { functions, models, tools, user } from '$lib/stores';
-import { getContext, onMount, tick } from 'svelte';
+	import { onMount, getContext, tick } from 'svelte';
+	import { models, tools, functions, user } from '$lib/stores';
+	import { WEBUI_BASE_URL, DEFAULT_CAPABILITIES } from '$lib/constants';
 
-import { getFunctions } from '$lib/apis/functions';
-import { getTools } from '$lib/apis/tools';
+	import { getTools } from '$lib/apis/tools';
+	import { getFunctions } from '$lib/apis/functions';
+	import { getModelsDefaults } from '$lib/apis/configs';
 
-import { updateModelAccessGrants } from '$lib/apis/models';
-import AdvancedParams from '$lib/components/chat/Settings/Advanced/AdvancedParams.svelte';
-import Spinner from '$lib/components/common/Spinner.svelte';
-import Tags from '$lib/components/common/Tags.svelte';
-import Textarea from '$lib/components/common/Textarea.svelte';
-import LockClosed from '$lib/components/icons/LockClosed.svelte';
-import XMark from '$lib/components/icons/XMark.svelte';
-import ActionsSelector from '$lib/components/workspace/Models/ActionsSelector.svelte';
-import Capabilities from '$lib/components/workspace/Models/Capabilities.svelte';
-import FiltersSelector from '$lib/components/workspace/Models/FiltersSelector.svelte';
-import Knowledge from '$lib/components/workspace/Models/Knowledge.svelte';
-import SkillsSelector from '$lib/components/workspace/Models/SkillsSelector.svelte';
-import ToolsSelector from '$lib/components/workspace/Models/ToolsSelector.svelte';
-import AccessControl from '../common/AccessControl.svelte';
-import AccessControlModal from '../common/AccessControlModal.svelte';
-import BuiltinTools from './BuiltinTools.svelte';
-import DefaultFeatures from './DefaultFeatures.svelte';
-import DefaultFiltersSelector from './DefaultFiltersSelector.svelte';
-import PromptSuggestions from './PromptSuggestions.svelte';
+	import AdvancedParams from '$lib/components/chat/Settings/Advanced/AdvancedParams.svelte';
+	import Tags from '$lib/components/common/Tags.svelte';
+	import Knowledge from '$lib/components/workspace/Models/Knowledge.svelte';
+	import ToolsSelector from '$lib/components/workspace/Models/ToolsSelector.svelte';
+	import SkillsSelector from '$lib/components/workspace/Models/SkillsSelector.svelte';
+	import FiltersSelector from '$lib/components/workspace/Models/FiltersSelector.svelte';
+	import ActionsSelector from '$lib/components/workspace/Models/ActionsSelector.svelte';
+	import Capabilities from '$lib/components/workspace/Models/Capabilities.svelte';
+	import Textarea from '$lib/components/common/Textarea.svelte';
+	import AccessControl from '../common/AccessControl.svelte';
+	import Spinner from '$lib/components/common/Spinner.svelte';
+	import XMark from '$lib/components/icons/XMark.svelte';
+	import DefaultFiltersSelector from './DefaultFiltersSelector.svelte';
+	import DefaultFeatures from './DefaultFeatures.svelte';
+	import BuiltinTools from './BuiltinTools.svelte';
+	import PromptSuggestions from './PromptSuggestions.svelte';
+	import TerminalSelector from './TerminalSelector.svelte';
+	import AccessControlModal from '../common/AccessControlModal.svelte';
+	import LockClosed from '$lib/components/icons/LockClosed.svelte';
+	import { updateModelAccessGrants } from '$lib/apis/models';
 
-const i18n = getContext('i18n');
+	const i18n = getContext('i18n');
 
-export let onSubmit: Function;
-export let onBack: null | Function = null;
+	export let onSubmit: Function;
+	export let onBack: null | Function = null;
 
-export let model = null;
-export let edit = false;
+	export let model = null;
+	export let edit = false;
 
-export let preset = true;
+	export let preset = true;
 
-let loading = false;
-let success = false;
+	let loading = false;
+	let success = false;
 
-let filesInputElement;
-let inputFiles;
+	let filesInputElement;
+	let inputFiles;
 
-let showAdvanced = false;
-let showPreview = false;
-let showAccessControlModal = false;
+	let showAdvanced = false;
+	let showPreview = false;
+	let showAccessControlModal = false;
 
-let loaded = false;
+	let loaded = false;
 
-// ///////////
-// model
-// ///////////
+	// ///////////
+	// model
+	// ///////////
 
-let id = '';
-let name = '';
+	let id = '';
+	let name = '';
 
-let enableDescription = true;
+	let enableDescription = true;
 
-$: if (!edit) {
-	if (name) {
-		id = name
-			.replace(/\s+/g, '-')
-			.replace(/[^a-zA-Z0-9-]/g, '')
-			.toLowerCase();
+	$: if (!edit) {
+		if (name) {
+			id = name
+				.replace(/\s+/g, '-')
+				.replace(/[^a-zA-Z0-9-]/g, '')
+				.toLowerCase();
+		}
 	}
-}
 
-let system = '';
-let info = {
-	id: '',
-	base_model_id: null,
-	name: '',
-	meta: {
-		profile_image_url: '/static/model-placeholder.webp',
-		description: '',
-		suggestion_prompts: null,
-		tags: []
-	},
-	params: {
+	let system = '';
+	let info = {
+		id: '',
+		base_model_id: null,
+		name: '',
+		meta: {
+			profile_image_url: `${WEBUI_BASE_URL}/static/favicon.png`,
+			description: '',
+			suggestion_prompts: null,
+			tags: []
+		},
+		params: {
+			system: ''
+		}
+	};
+
+	let params = {
 		system: ''
-	}
-};
+	};
 
-let params = {
-	system: ''
-};
+	let knowledge = [];
+	let toolIds = [];
+	let skillIds = [];
 
-let knowledge = [];
-let toolIds = [];
-let skillIds = [];
+	let filterIds = [];
+	let defaultFilterIds = [];
 
-let filterIds = [];
-let defaultFilterIds = [];
+	let capabilities = { ...DEFAULT_CAPABILITIES };
+	let defaultFeatureIds = [];
+	let builtinTools = {};
 
-let capabilities = {
-	file_context: true,
-	vision: true,
-	file_upload: true,
-	web_search: true,
-	image_generation: true,
-	code_interpreter: true,
-	citations: true,
-	status_updates: true,
-	usage: undefined,
-	builtin_tools: true
-};
-let defaultFeatureIds = [];
-let builtinTools = {};
+	let actionIds = [];
+	let accessGrants = [];
+	let terminalId = '';
+	let tts = { voice: '' };
 
-let actionIds = [];
-let accessGrants = [];
-let tts = { voice: '' };
+	const submitHandler = async () => {
+		loading = true;
 
-const submitHandler = async () => {
-	loading = true;
+		info.id = id;
+		info.name = name;
 
-	info.id = id;
-	info.name = name;
+		if (id === '') {
+			toast.error($i18n.t('Model ID is required.'));
+			loading = false;
 
-	if (id === '') {
-		toast.error($i18n.t('Model ID is required.'));
-		loading = false;
-
-		return;
-	}
-
-	if (name === '') {
-		toast.error($i18n.t('Model Name is required.'));
-		loading = false;
-
-		return;
-	}
-
-	if (knowledge.some((item) => item.status === 'uploading')) {
-		toast.error($i18n.t('Please wait until all files are uploaded.'));
-		loading = false;
-
-		return;
-	}
-
-	info.params = { ...info.params, ...params };
-
-	info.access_grants = accessGrants;
-	info.meta.capabilities = capabilities;
-
-	if (enableDescription) {
-		info.meta.description = info.meta.description.trim() === '' ? null : info.meta.description;
-	} else {
-		info.meta.description = null;
-	}
-
-	if (knowledge.length > 0) {
-		info.meta.knowledge = knowledge;
-	} else {
-		if (info.meta.knowledge) {
-			delete info.meta.knowledge;
+			return;
 		}
-	}
 
-	if (toolIds.length > 0) {
-		info.meta.toolIds = toolIds;
-	} else {
-		if (info.meta.toolIds) {
-			delete info.meta.toolIds;
+		if (name === '') {
+			toast.error($i18n.t('Model Name is required.'));
+			loading = false;
+
+			return;
 		}
-	}
 
-	if (filterIds.length > 0) {
-		info.meta.filterIds = filterIds;
-	} else {
-		if (info.meta.filterIds) {
-			delete info.meta.filterIds;
+		if (knowledge.some((item) => item.status === 'uploading')) {
+			toast.error($i18n.t('Please wait until all files are uploaded.'));
+			loading = false;
+
+			return;
 		}
-	}
 
-	if (defaultFilterIds.length > 0) {
-		info.meta.defaultFilterIds = defaultFilterIds;
-	} else {
-		if (info.meta.defaultFilterIds) {
-			delete info.meta.defaultFilterIds;
+		info.params = { ...info.params, ...params };
+
+		info.access_grants = accessGrants;
+		info.meta.capabilities = capabilities;
+
+		if (enableDescription) {
+			info.meta.description = info.meta.description.trim() === '' ? null : info.meta.description;
+		} else {
+			info.meta.description = null;
 		}
-	}
 
-	if (actionIds.length > 0) {
-		info.meta.actionIds = actionIds;
-	} else {
-		if (info.meta.actionIds) {
-			delete info.meta.actionIds;
-		}
-	}
-
-	if (defaultFeatureIds.length > 0) {
-		info.meta.defaultFeatureIds = defaultFeatureIds;
-	} else {
-		if (info.meta.defaultFeatureIds) {
-			delete info.meta.defaultFeatureIds;
-		}
-	}
-
-	if (Object.keys(builtinTools).length > 0) {
-		info.meta.builtinTools = builtinTools;
-	} else {
-		if (info.meta.builtinTools) {
-			delete info.meta.builtinTools;
-		}
-	}
-
-	if (tts.voice !== '') {
-		if (!info.meta.tts) info.meta.tts = {};
-		info.meta.tts.voice = tts.voice;
-	} else {
-		if (info.meta.tts?.voice) {
-			delete info.meta.tts.voice;
-			if (Object.keys(info.meta.tts).length === 0) {
-				delete info.meta.tts;
-			}
-		}
-	}
-
-	info.params.system = system.trim() === '' ? null : system;
-	info.params.stop = params.stop ? params.stop.split(',').filter((s) => s.trim()) : null;
-	Object.keys(info.params).forEach((key) => {
-		if (info.params[key] === '' || info.params[key] === null) {
-			delete info.params[key];
-		}
-	});
-
-	await onSubmit(info);
-
-	loading = false;
-	success = false;
-};
-
-onMount(async () => {
-	await tools.set(await getTools(localStorage.token));
-	await functions.set(await getFunctions(localStorage.token));
-
-	// Scroll to top 'workspace-container' element
-	const workspaceContainer = document.getElementById('workspace-container');
-	if (workspaceContainer) {
-		workspaceContainer.scrollTop = 0;
-	}
-
-	if (model) {
-		name = model.name;
-		await tick();
-
-		id = model.id;
-
-		enableDescription = model?.meta?.description !== null;
-
-		if (model.base_model_id) {
-			const base_model = $models
-				.filter((m) => !m?.preset && !(m?.arena ?? false))
-				.find((m) => [model.base_model_id, `${model.base_model_id}:latest`].includes(m.id));
-
-			console.log('base_model', base_model);
-
-			if (base_model) {
-				model.base_model_id = base_model.id;
-			} else {
-				model.base_model_id = null;
+		if (knowledge.length > 0) {
+			info.meta.knowledge = knowledge;
+		} else {
+			if (info.meta.knowledge) {
+				delete info.meta.knowledge;
 			}
 		}
 
-		system = model?.params?.system ?? '';
+		if (toolIds.length > 0) {
+			info.meta.toolIds = toolIds;
+		} else {
+			if (info.meta.toolIds) {
+				delete info.meta.toolIds;
+			}
+		}
 
-		params = { ...params, ...model?.params };
-		params.stop = params?.stop
-			? (typeof params.stop === 'string' ? params.stop.split(',') : (params?.stop ?? [])).join(',')
+		if (skillIds.length > 0) {
+			info.meta.skillIds = skillIds;
+		} else {
+			if (info.meta.skillIds) {
+				delete info.meta.skillIds;
+			}
+		}
+
+		if (filterIds.length > 0) {
+			info.meta.filterIds = filterIds;
+		} else {
+			if (info.meta.filterIds) {
+				delete info.meta.filterIds;
+			}
+		}
+
+		if (defaultFilterIds.length > 0) {
+			info.meta.defaultFilterIds = defaultFilterIds;
+		} else {
+			if (info.meta.defaultFilterIds) {
+				delete info.meta.defaultFilterIds;
+			}
+		}
+
+		if (actionIds.length > 0) {
+			info.meta.actionIds = actionIds;
+		} else {
+			if (info.meta.actionIds) {
+				delete info.meta.actionIds;
+			}
+		}
+
+		if (defaultFeatureIds.length > 0) {
+			info.meta.defaultFeatureIds = defaultFeatureIds;
+		} else {
+			if (info.meta.defaultFeatureIds) {
+				delete info.meta.defaultFeatureIds;
+			}
+		}
+
+		if (Object.keys(builtinTools).length > 0) {
+			info.meta.builtinTools = builtinTools;
+		} else {
+			if (info.meta.builtinTools) {
+				delete info.meta.builtinTools;
+			}
+		}
+
+		if (terminalId) {
+			info.meta.terminalId = terminalId;
+		} else {
+			if (info.meta.terminalId) {
+				delete info.meta.terminalId;
+			}
+		}
+
+		if (tts.voice !== '') {
+			if (!info.meta.tts) info.meta.tts = {};
+			info.meta.tts.voice = tts.voice;
+		} else {
+			if (info.meta.tts?.voice) {
+				delete info.meta.tts.voice;
+				if (Object.keys(info.meta.tts).length === 0) {
+					delete info.meta.tts;
+				}
+			}
+		}
+
+		info.params.system = system.trim() === '' ? null : system;
+		info.params.stop = params.stop
+			? (typeof params.stop === 'string' ? params.stop.split(',') : params.stop).filter((s) =>
+					s.trim()
+				)
 			: null;
-
-		knowledge = (model?.meta?.knowledge ?? []).map((item) => {
-			if (item?.collection_name && item?.type !== 'file') {
-				return {
-					id: item.collection_name,
-					name: item.name,
-					legacy: true
-				};
-			} else if (item?.collection_names) {
-				return {
-					name: item.name,
-					type: 'collection',
-					collection_names: item.collection_names,
-					legacy: true
-				};
-			} else {
-				return item;
+		Object.keys(info.params).forEach((key) => {
+			if (info.params[key] === '' || info.params[key] === null) {
+				delete info.params[key];
 			}
 		});
 
-		toolIds = model?.meta?.toolIds ?? [];
-		skillIds = model?.meta?.skillIds ?? [];
-		filterIds = model?.meta?.filterIds ?? [];
-		defaultFilterIds = model?.meta?.defaultFilterIds ?? [];
-		actionIds = model?.meta?.actionIds ?? [];
+		await onSubmit(info);
 
-		capabilities = { ...capabilities, ...(model?.meta?.capabilities ?? {}) };
-		defaultFeatureIds = model?.meta?.defaultFeatureIds ?? [];
-		builtinTools = model?.meta?.builtinTools ?? {};
-		tts = { voice: model?.meta?.tts?.voice ?? '' };
+		loading = false;
+		success = false;
+	};
 
-		accessGrants = model?.access_grants ?? [];
+	onMount(async () => {
+		await tools.set(await getTools(localStorage.token));
+		await functions.set(await getFunctions(localStorage.token));
 
-		info = {
-			...info,
-			...JSON.parse(
-				JSON.stringify(
-					model
-						? model
-						: {
-								id: model.id,
-								name: model.name
-							}
+		// Fetch admin-configured default model metadata so the editor
+		// reflects the actual defaults rather than hardcoded values
+		const modelsConfig = await getModelsDefaults(localStorage.token).catch(() => null);
+		const defaultMeta = modelsConfig?.DEFAULT_MODEL_METADATA ?? {};
+
+		// Use admin defaults as base, falling back to hardcoded defaults
+		capabilities = { ...DEFAULT_CAPABILITIES, ...(defaultMeta.capabilities ?? {}) };
+		defaultFeatureIds = defaultMeta.defaultFeatureIds ?? [];
+		builtinTools = defaultMeta.builtinTools ?? {};
+
+		// Scroll to top 'workspace-container' element
+		const workspaceContainer = document.getElementById('workspace-container');
+		if (workspaceContainer) {
+			workspaceContainer.scrollTop = 0;
+		}
+
+		if (model) {
+			name = model.name;
+			await tick();
+
+			id = model.id;
+
+			enableDescription = model?.meta?.description !== null;
+
+			if (model.base_model_id) {
+				const base_model = $models
+					.filter((m) => !m?.preset && !(m?.arena ?? false))
+					.find((m) => [model.base_model_id, `${model.base_model_id}:latest`].includes(m.id));
+
+				console.log('base_model', base_model);
+
+				if (base_model) {
+					model.base_model_id = base_model.id;
+				} else {
+					model.base_model_id = null;
+				}
+			}
+
+			system = model?.params?.system ?? '';
+
+			params = { ...params, ...model?.params };
+			params.stop = params?.stop
+				? (typeof params.stop === 'string' ? params.stop.split(',') : (params?.stop ?? [])).join(
+						','
+					)
+				: null;
+
+			knowledge = (model?.meta?.knowledge ?? []).map((item) => {
+				if (item?.collection_name && item?.type !== 'file') {
+					return {
+						id: item.collection_name,
+						name: item.name,
+						legacy: true
+					};
+				} else if (item?.collection_names) {
+					return {
+						name: item.name,
+						type: 'collection',
+						collection_names: item.collection_names,
+						legacy: true
+					};
+				} else {
+					return item;
+				}
+			});
+
+			toolIds = model?.meta?.toolIds ?? [];
+			skillIds = model?.meta?.skillIds ?? [];
+			filterIds = model?.meta?.filterIds ?? [];
+			defaultFilterIds = model?.meta?.defaultFilterIds ?? [];
+			actionIds = model?.meta?.actionIds ?? [];
+
+			// Per-model overrides take precedence over admin defaults
+			capabilities = { ...capabilities, ...(model?.meta?.capabilities ?? {}) };
+			defaultFeatureIds = model?.meta?.defaultFeatureIds ?? defaultFeatureIds;
+			builtinTools = model?.meta?.builtinTools ?? builtinTools;
+			terminalId = model?.meta?.terminalId ?? '';
+			tts = { voice: model?.meta?.tts?.voice ?? '' };
+
+			accessGrants = model?.access_grants ?? [];
+
+			info = {
+				...info,
+				...JSON.parse(
+					JSON.stringify(
+						model
+							? model
+							: {
+									id: model.id,
+									name: model.name
+								}
+					)
 				)
-			)
-		};
+			};
 
-		console.log(model);
-	}
+			console.log(model);
+		}
 
-	loaded = true;
-});
+		loaded = true;
+	});
 </script>
 
 {#if loaded}
@@ -333,6 +359,7 @@ onMount(async () => {
 		accessRoles={preset ? ['read', 'write'] : ['read']}
 		share={$user?.permissions?.sharing?.models || $user?.role === 'admin'}
 		sharePublic={$user?.permissions?.sharing?.public_models || $user?.role === 'admin'}
+		shareUsers={($user?.permissions?.access_grants?.allow_users ?? true) || $user?.role === 'admin'}
 		onChange={async () => {
 			if (edit && model?.id) {
 				try {
@@ -466,7 +493,7 @@ onMount(async () => {
 							<div class="self-center">
 								<button
 									class="rounded-2xl flex shrink-0 items-center {info.meta.profile_image_url !==
-									'/static/model-placeholder.webp'
+									`${WEBUI_BASE_URL}/static/favicon.png`
 										? 'bg-transparent'
 										: 'bg-white'} shadow-xl group relative"
 									type="button"
@@ -483,7 +510,7 @@ onMount(async () => {
 										/>
 									{:else}
 										<img
-											src="/static/model-placeholder.webp"
+											src="{WEBUI_BASE_URL}/static/favicon.png"
 											alt="model profile"
 											class=" rounded-xl size-20 md:size-48 object-cover shrink-0"
 										/>
@@ -519,7 +546,7 @@ onMount(async () => {
 									<button
 										class="px-2 py-1 text-gray-500 rounded-lg text-xs"
 										on:click={() => {
-											info.meta.profile_image_url = '/static/model-placeholder.webp';
+											info.meta.profile_image_url = `${WEBUI_BASE_URL}/static/favicon.png`;
 										}}
 										type="button"
 									>
@@ -809,6 +836,12 @@ onMount(async () => {
 					{#if capabilities.builtin_tools}
 						<div class="my-4">
 							<BuiltinTools bind:builtinTools />
+						</div>
+					{/if}
+
+					{#if capabilities.terminal}
+						<div class="my-4">
+							<TerminalSelector bind:terminalId />
 						</div>
 					{/if}
 
