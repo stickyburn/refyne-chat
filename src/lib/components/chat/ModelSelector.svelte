@@ -7,6 +7,7 @@
 
 	import { updateUserSettings } from '$lib/apis/users';
 	import equal from 'fast-deep-equal';
+	const i18n = getContext('i18n');
 	const dispatch = createEventDispatcher();
 
 	export let selectedModels = [''];
@@ -29,6 +30,8 @@
 	const isCurrentModelDefault = (modelId: string) => {
 		return ($settings?.models ?? []).includes(modelId);
 	};
+
+	const pinModelHandler = async (modelId) => {
 		let pinnedModels = $settings?.pinnedModels ?? [];
 
 		if (pinnedModels.includes(modelId)) {
