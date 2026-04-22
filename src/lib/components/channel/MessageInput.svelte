@@ -646,7 +646,7 @@
 		loaded = true;
 
 		window.setTimeout(() => {
-			if (chatInputElement && !) {
+			if (chatInputElement && !$mobile) {
 				chatInputElement.focus();
 			}
 		}, 100);
