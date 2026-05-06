@@ -601,6 +601,8 @@ onMount(async () => {
 													: '/static/model-placeholder.webp'}
 												alt="modelfile profile"
 												class=" rounded-2xl size-12 object-cover"
+												loading="lazy"
+												decoding="async"
 												on:error={(e) => {
 													e.target.src = '/static/model-placeholder.webp';
 												}}
