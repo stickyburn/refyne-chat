@@ -43,8 +43,9 @@ const i18n = getContext('i18n');
 const dispatch = createEventDispatcher();
 
 export let initNewChat: Function;
-export let shareEnabled = false;
+export let shareEnabled: boolean = false;
 export let scrollTop = 0;
+export let scrollToTop: (() => void) | null = null;
 
 export let hidden = false;
 
@@ -55,6 +56,7 @@ export let showModelSelector = true;
 
 export let onSaveTempChat: () => {};
 export let archiveChatHandler: (id: string) => void;
+export let deleteChatHandler: (id: string) => void;
 export let moveChatHandler: (id: string, folderId: string) => void;
 
 let closedBannerIds = [];
@@ -204,11 +206,15 @@ $: if (dropdownOpen && hidden) {
 						<Menu
 							{chat}
 							{shareEnabled}
+							{scrollToTop}
 							shareHandler={() => {
 								showShareChatModal = !showShareChatModal;
 							}}
 							archiveChatHandler={() => {
 								archiveChatHandler(chat.id);
+							}}
+							deleteChatHandler={() => {
+								deleteChatHandler(chat.id);
 							}}
 							{moveChatHandler}
 						>
