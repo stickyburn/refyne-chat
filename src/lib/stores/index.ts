@@ -229,6 +229,8 @@ type Settings = {
 	ctrlEnterToSend?: boolean;
 	enterToSendMobile?: boolean;
 	renderMarkdownInPreviews?: boolean;
+	renderMarkdownInUserMessages?: boolean;
+	renderMarkdownInAssistantMessages?: boolean;
 	recentEmojis?: string[];
 	pinnedMenuItems?: string[];
 
@@ -304,6 +306,7 @@ type Config = {
 		providers: {
 			[key: string]: string;
 		};
+		auto_redirect?: boolean;
 	};
 	ui?: {
 		pending_user_overlay_title?: string;
