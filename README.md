@@ -1,6 +1,6 @@
 # Refyne ✨
 
-An open-webui fork with a cleaner design and quality of life improvements.
+Open-webui with a cleaner design and quality of workflow improvements.
 
 <p align="center">
   <img src="./static/ui-light.webp" alt="Refyne UI Light Mode" width="48%" />
@@ -29,4 +29,4 @@ An open-webui fork with a cleaner design and quality of life improvements.
 ---
 
 
-*Maintained by [Myself](https://www.linkedin.com/in/yashaank/)*
+*Maintained by [stickyburn](https://www.linkedin.com/in/yashaank/)*
