@@ -5,8 +5,6 @@
 	"scripts": {
 		"dev": "npm run pyodide:fetch && vite dev --host",
 		"dev:5050": "npm run pyodide:fetch && vite dev --port 5050",
-		"dev:all": "concurrently \"npm run dev\" \"cd backend && .venv/bin/python -m uvicorn open_webui.main:app --port 5001 --host 0.0.0.0 --reload\"",
-		"dev:backend": "cd backend && .venv/bin/python -m uvicorn open_webui.main:app --port 5001 --host 0.0.0.0 --reload",
 		"build": "npm run pyodide:fetch && vite build",
 		"build:watch": "npm run pyodide:fetch && vite build --watch",
 		"preview": "vite preview",
@@ -33,7 +31,6 @@
 		"@tailwindcss/typography": "^0.5.13",
 		"@typescript-eslint/eslint-plugin": "^8.31.1",
 		"@typescript-eslint/parser": "^8.31.1",
-		"concurrently": "^9.2.1",
 		"cypress": "^13.15.0",
 		"eslint": "^8.56.0",
 		"eslint-config-prettier": "^9.1.0",
