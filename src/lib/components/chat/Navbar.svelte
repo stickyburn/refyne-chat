@@ -43,6 +43,7 @@ const i18n = getContext('i18n');
 const dispatch = createEventDispatcher();
 
 export let initNewChat: Function;
+export let readOnly: boolean = false;
 export let shareEnabled: boolean = false;
 export let scrollTop = 0;
 export let scrollToTop: (() => void) | null = null;
@@ -133,7 +134,8 @@ $: if (dropdownOpen && hidden) {
 					{#if showModelSelector}
 						<ModelSelector
 							bind:selectedModels
-							showSetDefault={!shareEnabled}
+							showSetDefault={!shareEnabled && !readOnly}
+							disabled={readOnly}
 							on:openChange={(e) => {
 								dropdownOpen = e.detail;
 							}}
@@ -214,6 +216,7 @@ $: if (dropdownOpen && hidden) {
 						<Menu
 							{chat}
 							{shareEnabled}
+							{readOnly}
 							{scrollToTop}
 							shareHandler={() => {
 								showShareChatModal = !showShareChatModal;
@@ -294,7 +297,9 @@ $: if (dropdownOpen && hidden) {
 	<div class="absolute top-[100%] left-0 right-0 h-fit">
 		{#if !history.currentId && !$chatId && ($banners.length > 0 || ($config?.license_metadata?.type ?? null) === 'trial' || (($config?.license_metadata?.seats ?? null) !== null && $config?.user_count > $config?.license_metadata?.seats))}
 			<div class=" w-full z-30">
-				<div class=" flex flex-col gap-1 w-full">
+				<div
+					class=" flex flex-col gap-1 w-full max-h-28 overflow-y-auto overscroll-contain md:max-h-none md:overflow-visible"
+				>
 					{#if ($config?.license_metadata?.type ?? null) === 'trial'}
 						<Banner
 							banner={{

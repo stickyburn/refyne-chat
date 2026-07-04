@@ -11,6 +11,7 @@ import {
 	createNewModel,
 	deleteAllModels,
 	getBaseModels,
+	getBaseModelTags,
 	importModels,
 	toggleModelById,
 	updateModelById
@@ -39,6 +40,8 @@ import ModelMenu from '$lib/components/admin/Settings/Models/ModelMenu.svelte';
 import EllipsisHorizontal from '$lib/components/icons/EllipsisHorizontal.svelte';
 import EyeSlash from '$lib/components/icons/EyeSlash.svelte';
 import Eye from '$lib/components/icons/Eye.svelte';
+import CheckCircle from '$lib/components/icons/CheckCircle.svelte';
+import Minus from '$lib/components/icons/Minus.svelte';
 import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 import { goto } from '$app/navigation';
 import { DropdownMenu } from 'bits-ui';
@@ -46,6 +49,9 @@ import { flyAndScale } from '$lib/utils/transitions';
 import Dropdown from '$lib/components/common/Dropdown.svelte';
 import AdminViewSelector from './Models/AdminViewSelector.svelte';
 import Pagination from '$lib/components/common/Pagination.svelte';
+import TagSelector from '$lib/components/workspace/common/TagSelector.svelte';
+
+type ModelListItem = { id: string; name?: string };
 
 let shiftKey = false;
 
@@ -55,8 +61,8 @@ let modelsImportInputElement: HTMLInputElement;
 
 let models = null;
 
-let workspaceModels = null;
-let baseModels = null;
+let workspaceModels: ModelListItem[] = [];
+let baseModels: ModelListItem[] = [];
 
 let filteredModels = [];
 let selectedModelId = null;
@@ -65,9 +71,17 @@ let showConfigModal = false;
 let showManageModal = false;
 
 let viewOption = ''; // '' = All, 'enabled', 'disabled', 'visible', 'hidden'
+let tags: string[] = [];
+let selectedTag = '';
 
 const perPage = 30;
 let currentPage = 1;
+
+const isPublicModel = (model) => {
+	return (model?.access_grants ?? []).some(
+		(g) => g.principal_type === 'user' && g.principal_id === '*' && g.permission === 'read'
+	);
+};
 
 $: if (models) {
 	filteredModels = models
@@ -77,6 +91,8 @@ $: if (models) {
 			if (viewOption === 'disabled') return !(m?.is_active ?? true);
 			if (viewOption === 'visible') return !(m?.meta?.hidden ?? false);
 			if (viewOption === 'hidden') return m?.meta?.hidden === true;
+			if (viewOption === 'public') return isPublicModel(m);
+			if (viewOption === 'private') return !isPublicModel(m);
 			return true; // All
 		})
 		.sort((a, b) => {
@@ -96,7 +112,12 @@ const enableAllHandler = async () => {
 	modelsToEnable.forEach((m) => (m.is_active = true));
 	models = models;
 	// Sync with server
-	await Promise.all(modelsToEnable.map((model) => toggleModelById(localStorage.token, model.id)));
+	await Promise.all(
+		modelsToEnable.map((model) => upsertModelHandler(model, { is_active: true }, false))
+	);
+
+	await tick();
+	await init();
 };
 
 const disableAllHandler = async () => {
@@ -105,7 +126,50 @@ const disableAllHandler = async () => {
 	modelsToDisable.forEach((m) => (m.is_active = false));
 	models = models;
 	// Sync with server
-	await Promise.all(modelsToDisable.map((model) => toggleModelById(localStorage.token, model.id)));
+	await Promise.all(
+		modelsToDisable.map((model) => upsertModelHandler(model, { is_active: false }, false))
+	);
+
+	await tick();
+	await init();
+};
+
+const showAllHandler = async () => {
+	const modelsToShow = filteredModels.filter((m) => m?.meta?.hidden === true);
+	// Optimistic UI update
+	modelsToShow.forEach((m) => {
+		m.meta = { ...m.meta, hidden: false };
+	});
+	models = models;
+	// Sync with server
+	await Promise.all(
+		modelsToShow.map((model) =>
+			upsertModelHandler(model, { meta: { ...model.meta, hidden: false } }, false)
+		)
+	);
+
+	toast.success($i18n.t('All models are now visible'));
+	await tick();
+	await init();
+};
+
+const hideAllHandler = async () => {
+	const modelsToHide = filteredModels.filter((m) => !(m?.meta?.hidden ?? false));
+	// Optimistic UI update
+	modelsToHide.forEach((m) => {
+		m.meta = { ...m.meta, hidden: true };
+	});
+	models = models;
+	// Sync with server
+	await Promise.all(
+		modelsToHide.map((model) =>
+			upsertModelHandler(model, { meta: { ...model.meta, hidden: true } }, false)
+		)
+	);
+
+	toast.success($i18n.t('All models are now hidden'));
+	await tick();
+	await init();
 };
 
 const downloadModels = async (models) => {
@@ -118,38 +182,53 @@ const downloadModels = async (models) => {
 const init = async () => {
 	models = null;
 
-	workspaceModels = await getBaseModels(localStorage.token);
+	tags = await getBaseModelTags(localStorage.token);
+	if (selectedTag && !tags.includes(selectedTag)) {
+		selectedTag = '';
+	}
+
+	workspaceModels = await getBaseModels(localStorage.token, selectedTag);
 	baseModels = await getModels(localStorage.token, null, true);
+	const workspaceModelIds = new Set<string>(workspaceModels.map((wm: ModelListItem) => wm.id));
 
-	models = baseModels.map((m) => {
-		const workspaceModel = workspaceModels.find((wm) => wm.id === m.id);
+	models = baseModels
+		.filter((m: ModelListItem) => !selectedTag || workspaceModelIds.has(m.id))
+		.map((m: ModelListItem) => {
+			const workspaceModel = workspaceModels.find((wm: ModelListItem) => wm.id === m.id);
 
-		if (workspaceModel) {
-			return {
-				...m,
-				...workspaceModel
-			};
-		} else {
-			return {
-				...m,
-				id: m.id,
-				name: m.name,
+			if (workspaceModel) {
+				return {
+					...m,
+					...workspaceModel
+				};
+			} else {
+				return {
+					...m,
+					id: m.id,
+					name: m.name,
 
-				is_active: true
-			};
-		}
-	});
+					is_active: true
+				};
+			}
+		});
+
+	_models.set(
+		await getModels(
+			localStorage.token,
+			$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
+		)
+	);
 };
 
-const upsertModelHandler = async (model) => {
-	model.base_model_id = null;
+const upsertModelHandler = async (model, overrides = {}, showToast = true) => {
+	model = { ...model, base_model_id: null, ...overrides };
 
 	if (workspaceModels.find((m) => m.id === model.id)) {
 		const res = await updateModelById(localStorage.token, model.id, model).catch((error) => {
 			return null;
 		});
 
-		if (res) {
+		if (res && showToast) {
 			toast.success($i18n.t('Model updated successfully'));
 		}
 	} else {
@@ -165,18 +244,11 @@ const upsertModelHandler = async (model) => {
 			return null;
 		});
 
-		if (res) {
+		if (res && showToast) {
 			toast.success($i18n.t('Model updated successfully'));
+			await init();
 		}
 	}
-	await init();
-
-	_models.set(
-		await getModels(
-			localStorage.token,
-			$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
-		)
-	);
 };
 
 const toggleModelHandler = async (model) => {
@@ -213,6 +285,8 @@ const hideModelHandler = async (model) => {
 
 	console.debug(model);
 
+	upsertModelHandler(model, { meta: model.meta }, false);
+
 	toast.success(
 		model.meta.hidden
 			? $i18n.t(`Model {{name}} is now hidden`, {
@@ -222,8 +296,6 @@ const hideModelHandler = async (model) => {
 					name: model.id
 				})
 	);
-
-	upsertModelHandler(model);
 };
 
 const copyLinkHandler = async (model) => {
@@ -444,6 +516,16 @@ onMount(async () => {
 					class="flex gap-0.5 w-fit text-center text-sm rounded-full bg-transparent whitespace-nowrap"
 				>
 					<AdminViewSelector bind:value={viewOption} />
+					{#if (tags ?? []).length > 0}
+						<TagSelector
+							bind:value={selectedTag}
+							items={tags.map((tag) => ({ value: tag, label: tag }))}
+							onChange={async () => {
+								currentPage = 1;
+								await init();
+							}}
+						/>
+					{/if}
 				</div>
 
 				<div class="flex-1"></div>
@@ -472,7 +554,7 @@ onMount(async () => {
 									enableAllHandler();
 								}}
 							>
-								<Eye className="size-4" />
+								<CheckCircle className="size-4" />
 								<div class="flex items-center">{$i18n.t('Enable All')}</div>
 							</DropdownMenu.Item>
 
@@ -482,8 +564,30 @@ onMount(async () => {
 									disableAllHandler();
 								}}
 							>
-								<EyeSlash className="size-4" />
+								<Minus className="size-4" />
 								<div class="flex items-center">{$i18n.t('Disable All')}</div>
+							</DropdownMenu.Item>
+
+							<hr class="border-gray-100 dark:border-gray-800 my-1" />
+
+							<DropdownMenu.Item
+								class="select-none flex gap-2 items-center px-3 py-1.5 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
+								on:click={() => {
+									showAllHandler();
+								}}
+							>
+								<Eye className="size-4" />
+								<div class="flex items-center">{$i18n.t('Show All')}</div>
+							</DropdownMenu.Item>
+
+							<DropdownMenu.Item
+								class="select-none flex gap-2 items-center px-3 py-1.5 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
+								on:click={() => {
+									hideAllHandler();
+								}}
+							>
+								<EyeSlash className="size-4" />
+								<div class="flex items-center">{$i18n.t('Hide All')}</div>
 							</DropdownMenu.Item>
 						</DropdownMenu.Content>
 					</div>
@@ -680,10 +784,11 @@ onMount(async () => {
 			edit
 			model={models.find((m) => m.id === selectedModelId)}
 			preset={false}
-			onSubmit={(model) => {
+			onSubmit={async (model) => {
 				console.log(model);
-				upsertModelHandler(model);
+				await upsertModelHandler(model);
 				selectedModelId = null;
+				await init();
 			}}
 			onBack={async () => {
 				selectedModelId = null;
