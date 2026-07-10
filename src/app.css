@@ -1,8 +1,8 @@
 @reference "./tailwind.css";
 
 @font-face {
-	font-family: "Mona Sans";
-	src: url("/assets/fonts/MonaSans-Regular.ttf");
+	font-family: "Switzer";
+	src: url("/assets/fonts/Switzer-Regular.otf");
 	font-display: swap;
 }
 
@@ -53,7 +53,7 @@ code {
 }
 
 .font-secondary {
-	font-family: "Mona Sans", sans-serif;
+	font-family: "Switzer", sans-serif;
 }
 
 .marked a {
@@ -101,7 +101,7 @@ textarea::placeholder {
 }
 
 .font-primary {
-	font-family: "Mona Sans", sans-serif;
+	font-family: "Switzer", sans-serif;
 }
 
 .drag-region {
