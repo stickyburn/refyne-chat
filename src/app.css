@@ -698,11 +698,11 @@ input::-webkit-inner-spin-button {
 
 body {
 	background: #eee9ff;
-	color: #0f0f1a;
+	color: #0e0f10;
 }
 
 .dark body {
-	background: #0f0f1a;
+	background: #0e0f10;
 	color: #eee9ff;
 }
 
