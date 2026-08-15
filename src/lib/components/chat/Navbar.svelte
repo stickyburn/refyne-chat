@@ -9,7 +9,6 @@ import {
 	config,
 	mobile,
 	settings,
-	showArchivedChats,
 	showControls,
 	showSidebar,
 	temporaryChatEnabled,
