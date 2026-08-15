@@ -3,7 +3,6 @@
 	import { onMount, tick, getContext, createEventDispatcher } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import Selector from './ModelSelector/Selector.svelte';
-	import Tooltip from '../common/Tooltip.svelte';
 
 	import { updateUserSettings } from '$lib/apis/users';
 	import equal from 'fast-deep-equal';
@@ -14,6 +13,12 @@
 	export let disabled = false;
 
 	export let showSetDefault = true;
+	export let triggerClassName = 'text-lg';
+	export let className = undefined;
+	export let placement: 'top' | 'bottom' | 'auto' = 'bottom';
+	export let align: 'start' | 'end' = 'start';
+
+	let compareModels = selectedModels.length > 1;
 
 	const saveDefaultModel = async () => {
 		const hasEmptyModel = selectedModels.filter((it) => it === '');
@@ -52,6 +57,10 @@
 		if (!equal(_selectedModels, selectedModels)) {
 			selectedModels = _selectedModels;
 		}
+	}
+
+	$: if (selectedModels.length > 1 && !compareModels) {
+		compareModels = true;
 	}
 </script>
 
@@ -143,4 +152,4 @@
 	>
 		<button on:click={saveDefaultModel}> {$i18n.t('Set as default')}</button>
 	</div>
-{/if}
+</div>

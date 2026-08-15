@@ -308,12 +308,14 @@ onMount(async () => {
 
 <form
 	id="tab-interface"
-	class="flex flex-col h-full justify-between space-y-3 text-sm"
+	class="flex flex-col h-full justify-between text-sm"
 	on:submit|preventDefault={() => {
 		updateInterfaceHandler();
 		dispatch('save');
 	}}
 >
+	<h2 class="text-sm font-medium text-gray-900 dark:text-white mb-4">{$i18n.t('Interface')}</h2>
+
 	<input
 		bind:this={filesInputElement}
 		bind:files={inputFiles}
@@ -342,19 +344,19 @@ onMount(async () => {
 		}}
 	/>
 
-	<div class=" space-y-3 overflow-y-scroll max-h-[28rem] md:max-h-full">
-		<div>
-			<h1 class=" mb-2 text-sm font-medium">{$i18n.t('UI')}</h1>
+	<div class="flex-1 min-h-0 overflow-y-auto scrollbar-hover pr-1.5">
+		<div class="flex flex-col gap-2.5">
+			<h3 class={firstSectionHeadingClass}>{$i18n.t('UI')}</h3>
 
 			<div>
-				<div class="py-0.5 flex w-full justify-between">
-					<label id="ui-scale-label" class=" self-center text-xs" for="ui-scale-slider">
+				<div class={settingRowClass}>
+					<label id="ui-scale-label" class={settingLabelClass} for="ui-scale-slider">
 						{$i18n.t('UI Scale')}
 					</label>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<button
-							class="text-xs"
+							class={actionButtonClass}
 							aria-live="polite"
 							type="button"
 							on:click={() => {
@@ -424,15 +426,18 @@ onMount(async () => {
 						</button>
 					</div>
 				{/if}
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Set a local zoom level for the app interface.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="high-contrast-mode-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="high-contrast-mode-label" class={settingLabelClass}>
 						{$i18n.t('High Contrast Mode')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="high-contrast-mode-label"
 							tooltip={true}
@@ -443,15 +448,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Increase contrast for controls and input surfaces.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="use-chat-title-as-tab-title-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="use-chat-title-as-tab-title-label" class={settingLabelClass}>
 						{$i18n.t('Display Chat Title in Tab')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="use-chat-title-as-tab-title-label"
 							tooltip={true}
@@ -462,53 +470,16 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Use the active chat title as the browser tab title.')}
+				</p>
 			</div>
 
 			<div>
-				<div class="py-0.5 flex w-full justify-between">
-					<div id="notification-sound-label" class=" self-center text-xs">
-						{$i18n.t('Notification Sound')}
-					</div>
+				<div id="allow-user-location-label" class={settingRowClass}>
+					<div class={settingLabelClass}>{$i18n.t('Allow User Location')}</div>
 
-					<div class="flex items-center gap-2 p-1">
-						<Switch
-							ariaLabelledbyId="notification-sound-label"
-							tooltip={true}
-							bind:state={notificationSound}
-							on:change={() => {
-								saveSettings({ notificationSound });
-							}}
-						/>
-					</div>
-				</div>
-			</div>
-
-			{#if notificationSound}
-				<div>
-					<div class=" py-0.5 flex w-full justify-between">
-						<div id="play-notification-sound-label" class=" self-center text-xs">
-							{$i18n.t('Always Play Notification Sound')}
-						</div>
-
-						<div class="flex items-center gap-2 p-1">
-							<Switch
-								ariaLabelledbyId="play-notification-sound-label"
-								tooltip={true}
-								bind:state={notificationSoundAlways}
-								on:change={() => {
-									saveSettings({ notificationSoundAlways });
-								}}
-							/>
-						</div>
-					</div>
-				</div>
-			{/if}
-
-			<div>
-				<div id="allow-user-location-label" class=" py-0.5 flex w-full justify-between">
-					<div class=" self-center text-xs">{$i18n.t('Allow User Location')}</div>
-
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="allow-user-location-label"
 							tooltip={true}
@@ -519,15 +490,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Share your current location with features that can use it.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="haptic-feedback-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="haptic-feedback-label" class={settingLabelClass}>
 						{$i18n.t('Haptic Feedback')} ({$i18n.t('Android')})
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="haptic-feedback-label"
 							tooltip={true}
@@ -538,15 +512,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Use device vibration feedback on supported Android devices.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="copy-formatted-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="copy-formatted-label" class={settingLabelClass}>
 						{$i18n.t('Copy Formatted Text')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="copy-formatted-label"
 							tooltip={true}
@@ -557,16 +534,19 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Copy rich formatted content instead of plain text.')}
+				</p>
 			</div>
 
 			{#if $user?.role === 'admin'}
 				<div>
-					<div class=" py-0.5 flex w-full justify-between">
-						<div id="toast-notifications-label" class=" self-center text-xs">
+					<div class={settingRowClass}>
+						<div id="toast-notifications-label" class={settingLabelClass}>
 							{$i18n.t('Toast Notifications for New Updates')}
 						</div>
 
-						<div class="flex items-center gap-2 p-1">
+						<div class={settingControlClass}>
 							<Switch
 								ariaLabelledbyId="toast-notifications-label"
 								tooltip={true}
@@ -577,15 +557,18 @@ onMount(async () => {
 							/>
 						</div>
 					</div>
+					<p class={settingDescriptionClass}>
+						{$i18n.t('Show update toasts to admins when new versions are available.')}
+					</p>
 				</div>
 
 				<div>
-					<div class=" py-0.5 flex w-full justify-between">
-						<div id="whats-new-label" class=" self-center text-xs">
+					<div class={settingRowClass}>
+						<div id="whats-new-label" class={settingLabelClass}>
 							{$i18n.t(`Show "What's New" Modal on Login`)}
 						</div>
 
-						<div class="flex items-center gap-2 p-1">
+						<div class={settingControlClass}>
 							<Switch
 								ariaLabelledbyId="whats-new-label"
 								tooltip={true}
@@ -596,18 +579,21 @@ onMount(async () => {
 							/>
 						</div>
 					</div>
+					<p class={settingDescriptionClass}>
+						{$i18n.t('Open the changelog modal after sign-in when enabled.')}
+					</p>
 				</div>
 			{/if}
 
-			<div class=" my-2 text-sm font-medium">{$i18n.t('Chat')}</div>
+			<div class={sectionHeadingClass}>{$i18n.t('Chat')}</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="enable-message-queue-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="enable-message-queue-label" class={settingLabelClass}>
 						{$i18n.t('Enable Message Queue')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="enable-message-queue-label"
 							tooltip={true}
@@ -618,21 +604,24 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Queue outgoing messages instead of interrupting active responses.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="chat-direction-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="chat-direction-label" class={settingLabelClass}>
 						{$i18n.t('Chat Direction')}
 					</div>
 
 					<button
 						aria-labelledby="chat-direction-label chat-direction-mode"
-						class="p-1 px-3 text-xs flex rounded-sm transition"
+						class={actionButtonClass}
 						on:click={toggleChangeChatDirection}
 						type="button"
 					>
-						<span class="ml-2 self-center" id="chat-direction-mode">
+						<span id="chat-direction-mode">
 							{chatDirection === 'LTR'
 								? $i18n.t('LTR')
 								: chatDirection === 'RTL'
@@ -641,38 +630,44 @@ onMount(async () => {
 						</span>
 					</button>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Choose automatic, left-to-right, or right-to-left text flow.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="landing-page-mode-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="landing-page-mode-label" class={settingLabelClass}>
 						{$i18n.t('Landing Page Mode')}
 					</div>
 
 					<button
 						aria-labelledby="landing-page-mode-label notification-sound-state"
-						class="p-1 px-3 text-xs flex rounded-sm transition"
+						class={actionButtonClass}
 						on:click={() => {
 							toggleLandingPageMode();
 						}}
 						type="button"
 					>
-						<span class="ml-2 self-center" id="notification-sound-state"
+						<span id="notification-sound-state"
 							>{landingPageMode === '' ? $i18n.t('Default') : $i18n.t('Chat')}</span
 						>
 					</button>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Choose whether the app opens to the default home or chat view.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="chat-background-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="chat-background-label" class={settingLabelClass}>
 						{$i18n.t('Chat Background Image')}
 					</div>
 
 					<button
 						aria-labelledby="chat-background-label background-image-url-state"
-						class="p-1 px-3 text-xs flex rounded-sm transition"
+						class={actionButtonClass}
 						on:click={() => {
 							if (backgroundImageUrl !== null) {
 								backgroundImageUrl = null;
@@ -683,20 +678,23 @@ onMount(async () => {
 						}}
 						type="button"
 					>
-						<span class="ml-2 self-center" id="background-image-url-state"
+						<span id="background-image-url-state"
 							>{backgroundImageUrl !== null ? $i18n.t('Reset') : $i18n.t('Upload')}</span
 						>
 					</button>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Upload or reset the image shown behind chat content.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="chat-bubble-ui-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="chat-bubble-ui-label" class={settingLabelClass}>
 						{$i18n.t('Chat Bubble UI')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							tooltip={true}
 							ariaLabelledbyId="chat-bubble-ui-label"
@@ -707,16 +705,19 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Render messages in compact bubble containers.')}
+				</p>
 			</div>
 
 			{#if !$settings.chatBubble}
 				<div>
-					<div class=" py-0.5 flex w-full justify-between">
-						<div id="chat-bubble-username-label" class=" self-center text-xs">
+					<div class={settingRowClass}>
+						<div id="chat-bubble-username-label" class={settingLabelClass}>
 							{$i18n.t('Display the Username Instead of You in the Chat')}
 						</div>
 
-						<div class="flex items-center gap-2 p-1">
+						<div class={settingControlClass}>
 							<Switch
 								ariaLabelledbyId="chat-bubble-username-label"
 								tooltip={true}
@@ -727,16 +728,19 @@ onMount(async () => {
 							/>
 						</div>
 					</div>
+					<p class={settingDescriptionClass}>
+						{$i18n.t('Show your username label instead of You in chat bubbles.')}
+					</p>
 				</div>
 			{/if}
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="widescreen-mode-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="widescreen-mode-label" class={settingLabelClass}>
 						{$i18n.t('Widescreen Mode')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="widescreen-mode-label"
 							tooltip={true}
@@ -747,16 +751,19 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Use a wider chat layout on large displays.')}
+				</p>
 			</div>
 
 			{#if $user.role === 'admin' || $user?.permissions?.chat?.temporary}
 				<div>
-					<div class=" py-0.5 flex w-full justify-between">
-						<div id="temp-chat-default-label" class=" self-center text-xs">
+					<div class={settingRowClass}>
+						<div id="temp-chat-default-label" class={settingLabelClass}>
 							{$i18n.t('Temporary Chat by Default')}
 						</div>
 
-						<div class="flex items-center gap-2 p-1">
+						<div class={settingControlClass}>
 							<Switch
 								ariaLabelledbyId="temp-chat-default-label"
 								tooltip={true}
@@ -767,16 +774,19 @@ onMount(async () => {
 							/>
 						</div>
 					</div>
+					<p class={settingDescriptionClass}>
+						{$i18n.t('Start new chats as temporary unless changed.')}
+					</p>
 				</div>
 			{/if}
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="fade-streaming-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="fade-streaming-label" class={settingLabelClass}>
 						{$i18n.t('Fade Effect for Streaming Text')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="fade-streaming-label"
 							tooltip={true}
@@ -787,15 +797,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Fade streaming text as it arrives.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="render-markdown-user-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="render-markdown-user-label" class={settingLabelClass}>
 						{$i18n.t('Render Markdown in User Messages')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="render-markdown-user-label"
 							tooltip={true}
@@ -806,15 +819,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Format Markdown syntax in your own messages.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="render-markdown-assistant-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="render-markdown-assistant-label" class={settingLabelClass}>
 						{$i18n.t('Render Markdown in Assistant Messages')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="render-markdown-assistant-label"
 							tooltip={true}
@@ -825,15 +841,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Format Markdown syntax in assistant responses.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="auto-generation-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="auto-generation-label" class={settingLabelClass}>
 						{$i18n.t('Title Auto-Generation')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="auto-generation-label"
 							tooltip={true}
@@ -844,15 +863,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Generate chat titles automatically from conversation content.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div class=" self-center text-xs" id="follow-up-auto-generation-label">
+				<div class={settingRowClass}>
+					<div class={settingLabelClass} id="follow-up-auto-generation-label">
 						{$i18n.t('Follow-Up Auto-Generation')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="follow-up-auto-generation-label"
 							tooltip={true}
@@ -863,15 +885,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Generate suggested follow-up prompts after responses.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="chat-tags-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="chat-tags-label" class={settingLabelClass}>
 						{$i18n.t('Chat Tags Auto-Generation')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="chat-tags-label"
 							tooltip={true}
@@ -882,15 +907,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Generate tags for chats automatically.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="auto-copy-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="auto-copy-label" class={settingLabelClass}>
 						{$i18n.t('Auto-Copy Response to Clipboard')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="auto-copy-label"
 							tooltip={true}
@@ -901,15 +929,40 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Copy the latest assistant response when it completes.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="insert-suggestion-prompt-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="response-auto-scroll-label" class={settingLabelClass}>
+						{$i18n.t('Response Auto-Scroll')}
+					</div>
+
+					<div class={settingControlClass}>
+						<Switch
+							ariaLabelledbyId="response-auto-scroll-label"
+							tooltip={true}
+							bind:state={scrollOnResponseGeneration}
+							on:change={() => {
+								saveSettings({ scrollOnResponseGeneration });
+							}}
+						/>
+					</div>
+				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Follow assistant responses as they are generated.')}
+				</p>
+			</div>
+
+			<div>
+				<div class={settingRowClass}>
+					<div id="insert-suggestion-prompt-label" class={settingLabelClass}>
 						{$i18n.t('Insert Suggestion Prompt to Input')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="insert-suggestion-prompt-label"
 							tooltip={true}
@@ -920,15 +973,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Place selected suggestion text into the composer.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="keep-follow-up-prompts-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="keep-follow-up-prompts-label" class={settingLabelClass}>
 						{$i18n.t('Keep Follow-Up Prompts in Chat')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="keep-follow-up-prompts-label"
 							tooltip={true}
@@ -939,15 +995,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Keep generated follow-up prompts visible in the chat.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="insert-follow-up-prompt-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="insert-follow-up-prompt-label" class={settingLabelClass}>
 						{$i18n.t('Insert Follow-Up Prompt to Input')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="insert-follow-up-prompt-label"
 							tooltip={true}
@@ -958,15 +1017,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Insert selected follow-up prompts directly into the composer.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="regenerate-menu-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="regenerate-menu-label" class={settingLabelClass}>
 						{$i18n.t('Regenerate Menu')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="regenerate-menu-label"
 							tooltip={true}
@@ -977,15 +1039,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Show the regenerate action menu for assistant responses.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="always-collapse-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="always-collapse-label" class={settingLabelClass}>
 						{$i18n.t('Always Collapse Code Blocks')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="always-collapse-label"
 							tooltip={true}
@@ -996,15 +1061,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Collapse code blocks by default.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="always-expand-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="always-expand-label" class={settingLabelClass}>
 						{$i18n.t('Always Expand Details')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="always-expand-label"
 							tooltip={true}
@@ -1015,15 +1083,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Open detail blocks by default.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="render-markdown-in-previews-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="render-markdown-in-previews-label" class={settingLabelClass}>
 						{$i18n.t('Render Markdown in Previews')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="render-markdown-in-previews-label"
 							tooltip={true}
@@ -1034,15 +1105,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Format Markdown in previews and compact content surfaces.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="keep-followup-prompts-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="keep-followup-prompts-label" class={settingLabelClass}>
 						{$i18n.t('Display Multi-model Responses in Tabs')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="keep-followup-prompts-label"
 							tooltip={true}
@@ -1053,15 +1127,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Group multi-model responses into tabs.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="scroll-on-branch-change-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="scroll-on-branch-change-label" class={settingLabelClass}>
 						{$i18n.t('Scroll On Branch Change')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="scroll-on-branch-change-label"
 							tooltip={true}
@@ -1072,15 +1149,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Scroll to the active branch when switching response branches.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="show-files-on-terminal-select-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="show-files-on-terminal-select-label" class={settingLabelClass}>
 						{$i18n.t('Show Files on Terminal Select')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="show-files-on-terminal-select-label"
 							tooltip={true}
@@ -1091,15 +1171,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Open the file browser after selecting a terminal.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="stylized-pdf-export-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="stylized-pdf-export-label" class={settingLabelClass}>
 						{$i18n.t('Stylized PDF Export')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="stylized-pdf-export-label"
 							tooltip={true}
@@ -1110,18 +1193,21 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Use styled formatting when exporting chats to PDF.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<label id="floating-action-buttons-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<label id="floating-action-buttons-label" class={settingLabelClass}>
 						{$i18n.t('Floating Quick Actions')}
 					</label>
 
-					<div class="flex items-center gap-3 p-1">
+					<div class={settingControlClass}>
 						{#if showFloatingActionButtons}
 							<button
-								class="text-xs text-gray-700 dark:text-gray-400 underline"
+								class={actionButtonClass}
 								type="button"
 								aria-label={$i18n.t('Open Modal To Manage Floating Quick Actions')}
 								on:click={() => {
@@ -1142,52 +1228,61 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Show the floating quick-action toolbar in chat.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="web-search-in-chat-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="web-search-in-chat-label" class={settingLabelClass}>
 						{$i18n.t('Web Search in Chat')}
 					</div>
 
 					<button
 						aria-labelledby="web-search-in-chat-label web-search-state"
-						class="p-1 px-3 text-xs flex rounded-sm transition"
+						class={actionButtonClass}
 						on:click={() => {
 							toggleWebSearch();
 						}}
 						type="button"
 					>
-						<span class="ml-2 self-center" id="web-search-state"
+						<span id="web-search-state"
 							>{webSearch === 'always' ? $i18n.t('Always') : $i18n.t('Default')}</span
 						>
 					</button>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Set web search availability for new chats.')}
+				</p>
 			</div>
 
-			<div class=" my-2 text-sm font-medium">{$i18n.t('Input')}</div>
+			<div class={sectionHeadingClass}>{$i18n.t('Input')}</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="enter-key-behavior-label ctrl-enter-to-send-state" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="enter-key-behavior-label ctrl-enter-to-send-state" class={settingLabelClass}>
 						{$i18n.t('Enter Key Behavior')}
 					</div>
 
 					<button
 						aria-labelledby="enter-key-behavior-label"
-						class="p-1 px-3 text-xs flex rounded transition"
+						class={actionButtonClass}
 						on:click={() => {
 							togglectrlEnterToSend();
 						}}
 						type="button"
 					>
-						<span class="ml-2 self-center" id="ctrl-enter-to-send-state"
+						<span id="ctrl-enter-to-send-state"
 							>{ctrlEnterToSend === true
 								? $i18n.t('Ctrl+Enter to Send')
 								: $i18n.t('Enter to Send')}</span
 						>
 					</button>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Choose whether Enter sends immediately or uses Ctrl+Enter.')}
+				</p>
 			</div>
 
 			<div>
@@ -1219,7 +1314,7 @@ onMount(async () => {
 						{$i18n.t('Rich Text Input for Chat')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							tooltip={true}
 							ariaLabelledbyId="rich-input-label"
@@ -1230,16 +1325,19 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Use the rich composer instead of a plain textarea.')}
+				</p>
 			</div>
 
 			{#if $config?.features?.enable_autocomplete_generation}
 				<div>
-					<div class=" py-0.5 flex w-full justify-between">
-						<div id="prompt-autocompletion-label" class=" self-center text-xs">
+					<div class={settingRowClass}>
+						<div id="prompt-autocompletion-label" class={settingLabelClass}>
 							{$i18n.t('Prompt Autocompletion')}
 						</div>
 
-						<div class="flex items-center gap-2 p-1">
+						<div class={settingControlClass}>
 							<Switch
 								ariaLabelledbyId="prompt-autocompletion-label"
 								tooltip={true}
@@ -1250,17 +1348,20 @@ onMount(async () => {
 							/>
 						</div>
 					</div>
+					<p class={settingDescriptionClass}>
+						{$i18n.t('Suggest completions while composing prompts.')}
+					</p>
 				</div>
 			{/if}
 
 			{#if richTextInput}
 				<div>
-					<div class=" py-0.5 flex w-full justify-between">
-						<div id="show-formatting-toolbar-label" class=" self-center text-xs">
+					<div class={settingRowClass}>
+						<div id="show-formatting-toolbar-label" class={settingLabelClass}>
 							{$i18n.t('Show Formatting Toolbar')}
 						</div>
 
-						<div class="flex items-center gap-2 p-1">
+						<div class={settingControlClass}>
 							<Switch
 								ariaLabelledbyId="show-formatting-toolbar-label"
 								tooltip={true}
@@ -1271,15 +1372,18 @@ onMount(async () => {
 							/>
 						</div>
 					</div>
+					<p class={settingDescriptionClass}>
+						{$i18n.t('Show formatting controls in the rich text composer.')}
+					</p>
 				</div>
 
 				<div>
-					<div class=" py-0.5 flex w-full justify-between">
-						<div id="insert-prompt-as-rich-text-label" class=" self-center text-xs">
+					<div class={settingRowClass}>
+						<div id="insert-prompt-as-rich-text-label" class={settingLabelClass}>
 							{$i18n.t('Insert Prompt as Rich Text')}
 						</div>
 
-						<div class="flex items-center gap-2 p-1">
+						<div class={settingControlClass}>
 							<Switch
 								ariaLabelledbyId="insert-prompt-as-rich-text-label"
 								tooltip={true}
@@ -1290,16 +1394,19 @@ onMount(async () => {
 							/>
 						</div>
 					</div>
+					<p class={settingDescriptionClass}>
+						{$i18n.t('Paste inserted prompts as rich text when possible.')}
+					</p>
 				</div>
 			{/if}
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="paste-large-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="paste-large-label" class={settingLabelClass}>
 						{$i18n.t('Paste Large Text as File')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							tooltip={true}
 							ariaLabelledbyId="paste-large-label"
@@ -1310,17 +1417,20 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Convert long pasted text into a file attachment.')}
+				</p>
 			</div>
 
-			<div class=" my-2 text-sm font-medium">{$i18n.t('Artifacts')}</div>
+			<div class={sectionHeadingClass}>{$i18n.t('Artifacts')}</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="detect-artifacts-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="detect-artifacts-label" class={settingLabelClass}>
 						{$i18n.t('Detect Artifacts Automatically')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="detect-artifacts-label"
 							tooltip={true}
@@ -1331,15 +1441,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Detect generated artifacts and show them in the artifact workspace.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="iframe-sandbox-allow-same-origin-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="iframe-sandbox-allow-same-origin-label" class={settingLabelClass}>
 						{$i18n.t('iframe Sandbox Allow Same Origin')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="iframe-sandbox-allow-same-origin-label"
 							tooltip={true}
@@ -1350,15 +1463,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Allow artifacts to access same-origin browser APIs inside the sandbox.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="iframe-sandbox-allow-forms-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="iframe-sandbox-allow-forms-label" class={settingLabelClass}>
 						{$i18n.t('iframe Sandbox Allow Forms')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="iframe-sandbox-allow-forms-label"
 							tooltip={true}
@@ -1369,17 +1485,20 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Allow forms inside sandboxed artifact iframes.')}
+				</p>
 			</div>
 
-			<div class=" my-2 text-sm font-medium">{$i18n.t('Voice')}</div>
+			<div class={sectionHeadingClass}>{$i18n.t('Voice')}</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div class=" self-center text-xs" id="allow-voice-interruption-in-call-label">
+				<div class={settingRowClass}>
+					<div class={settingLabelClass} id="allow-voice-interruption-in-call-label">
 						{$i18n.t('Allow Voice Interruption in Call')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="allow-voice-interruption-in-call-label"
 							tooltip={true}
@@ -1390,15 +1509,18 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Let speech interrupt the assistant during a voice call.')}
+				</p>
 			</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="display-emoji-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="display-emoji-label" class={settingLabelClass}>
 						{$i18n.t('Display Emoji in Call')}
 					</div>
 
-					<div class="flex items-center gap-2 p-1">
+					<div class={settingControlClass}>
 						<Switch
 							ariaLabelledbyId="display-emoji-label"
 							tooltip={true}
@@ -1409,20 +1531,50 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Show emoji feedback in the call interface.')}
+				</p>
 			</div>
 
-			<div class=" my-2 text-sm font-medium">{$i18n.t('File')}</div>
+			<div class={sectionHeadingClass}>{$i18n.t('File')}</div>
 
 			<div>
-				<div class=" py-0.5 flex w-full justify-between">
-					<div id="image-compression-label" class=" self-center text-xs">
+				<div class={settingRowClass}>
+					<div id="default-upload-mode-label" class={settingLabelClass}>
+						{$i18n.t('Default Upload Mode')}
+					</div>
+
+					<button
+						aria-labelledby="default-upload-mode-label default-upload-mode-state"
+						class={actionButtonClass}
+						on:click={() => {
+							defaultUploadContext = defaultUploadContext === 'full' ? 'focused' : 'full';
+							saveSettings({ defaultUploadContext });
+						}}
+						type="button"
+					>
+						<span id="default-upload-mode-state">
+							{defaultUploadContext === 'full'
+								? $i18n.t('Using Entire Document')
+								: $i18n.t('Using Focused Retrieval')}
+						</span>
+					</button>
+				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Attach files with full content or focused retrieval by default.')}
+				</p>
+			</div>
+
+			<div>
+				<div class={settingRowClass}>
+					<div id="image-compression-label" class={settingLabelClass}>
 						{$i18n.t('Image Compression')}
 					</div>
 
-					<div class="flex items-center gap-3 p-1">
+					<div class={settingControlClass}>
 						{#if imageCompression}
 							<button
-								class="text-xs text-gray-700 dark:text-gray-400 underline"
+								class={actionButtonClass}
 								type="button"
 								aria-label={$i18n.t('Open Modal To Manage Image Compression')}
 								on:click={() => {
@@ -1443,16 +1595,19 @@ onMount(async () => {
 						/>
 					</div>
 				</div>
+				<p class={settingDescriptionClass}>
+					{$i18n.t('Compress uploaded images before sending or storage.')}
+				</p>
 			</div>
 
 			{#if imageCompression}
 				<div>
-					<div class=" py-0.5 flex w-full justify-between">
-						<div id="image-compression-in-channels-label" class=" self-center text-xs">
+					<div class={settingRowClass}>
+						<div id="image-compression-in-channels-label" class={settingLabelClass}>
 							{$i18n.t('Compress Images in Channels')}
 						</div>
 
-						<div class="flex items-center gap-2 p-1">
+						<div class={settingControlClass}>
 							<Switch
 								ariaLabelledbyId="image-compression-in-channels-label"
 								tooltip={true}
@@ -1463,14 +1618,17 @@ onMount(async () => {
 							/>
 						</div>
 					</div>
+					<p class={settingDescriptionClass}>
+						{$i18n.t('Apply image compression to channel uploads too.')}
+					</p>
 				</div>
 			{/if}
 		</div>
 	</div>
 
-	<div class="flex justify-end text-sm font-medium">
+	<div class="shrink-0 flex justify-end text-sm font-normal">
 		<button
-			class="px-3.5 py-1.5 text-sm font-medium bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"
+			class="px-3.5 py-1.5 text-sm font-normal bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"
 			type="submit"
 		>
 			{$i18n.t('Save')}

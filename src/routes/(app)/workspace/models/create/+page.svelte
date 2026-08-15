@@ -99,5 +99,11 @@ onMount(() => {
 </script>
 
 {#key model}
-	<ModelEditor {model} {onSubmit} />
+	<ModelEditor
+		{model}
+		{onSubmit}
+		onBack={async () => {
+			await goto('/workspace/models');
+		}}
+	/>
 {/key}

@@ -375,58 +375,87 @@ onMount(async () => {
 });
 </script>
 
-<ModelSettingsModal bind:show={showConfigModal} initHandler={init} />
+<ConfirmDialog
+	title={$i18n.t('Reset All Models')}
+	message={$i18n.t('This will delete all models including custom models and cannot be undone.')}
+	bind:show={showResetModal}
+	onConfirm={async () => {
+		const res = await deleteAllModels(localStorage.token);
+		if (res) {
+			toast.success($i18n.t('All models deleted successfully'));
+			await init();
+		}
+	}}
+/>
+
 <ManageModelsModal bind:show={showManageModal} />
 
 {#if models !== null}
 	{#if selectedModelId === null}
-		<div class="flex flex-col gap-1 mt-1.5 mb-2">
-			<div class="flex justify-between items-center">
-				<div class="flex items-center md:self-center text-xl font-medium px-0.5 gap-2 shrink-0">
-					<div>
-						{$i18n.t('Models')}
-					</div>
-
-					<div class="text-lg font-medium text-gray-500 dark:text-gray-500">
+		<div class="flex h-full min-h-0 flex-col text-sm">
+			<div class="mb-2 flex items-center justify-between">
+				<h2 class="text-sm font-medium text-gray-900 dark:text-white">
+					{$i18n.t('Models')}
+					<span class="ml-2 font-normal text-gray-500 dark:text-gray-500">
 						{filteredModels.length}
-					</div>
-				</div>
+					</span>
+				</h2>
+			</div>
 
-				<div class="flex w-full justify-end gap-1.5">
-					{#if $user?.role === 'admin'}
-						<input
-							id="models-import-input"
-							bind:this={modelsImportInputElement}
-							bind:files={importFiles}
-							type="file"
-							accept=".json"
-							hidden
-							on:change={() => {
-								if (importFiles.length > 0) {
-									const reader = new FileReader();
-									reader.onload = async (event) => {
-										modelsImportInProgress = true;
+			{#if $user?.role === 'admin'}
+				<input
+					id="models-import-input"
+					bind:this={modelsImportInputElement}
+					bind:files={importFiles}
+					type="file"
+					accept=".json"
+					hidden
+					on:change={() => {
+						if (importFiles.length > 0) {
+							const reader = new FileReader();
+							reader.onload = async (event) => {
+								modelsImportInProgress = true;
 
-										try {
-											const models = JSON.parse(String(event.target.result));
-											const res = await importModels(localStorage.token, models);
+								try {
+									const models = JSON.parse(String(event.target.result));
+									const res = await importModels(localStorage.token, models);
 
-											if (res) {
-												toast.success($i18n.t('Models imported successfully'));
-												await init();
-											} else {
-												toast.error($i18n.t('Failed to import models'));
-											}
-										} catch (e) {
-											toast.error(e?.detail ?? $i18n.t('Invalid JSON file'));
-											console.error(e);
-										}
-
-										modelsImportInProgress = false;
-									};
-									reader.readAsText(importFiles[0]);
+									if (res) {
+										toast.success($i18n.t('Models imported successfully'));
+										await init();
+									} else {
+										toast.error($i18n.t('Failed to import models'));
+									}
+								} catch (e) {
+									toast.error(e?.detail ?? $i18n.t('Invalid JSON file'));
+									console.error(e);
 								}
-							}}
+
+								modelsImportInProgress = false;
+							};
+							reader.readAsText(importFiles[0]);
+						}
+					}}
+				/>
+			{/if}
+
+			<div class="flex min-h-0 flex-1 flex-col space-y-1">
+				<ModelDefaultsPanel
+					bind:this={modelDefaultsPanel}
+					bind:dirty={modelDefaultsDirty}
+					initHandler={init}
+				/>
+
+				<div class="flex h-8 shrink-0 items-center w-full gap-2">
+					<div class="flex min-w-0 flex-1 items-center">
+						<div class=" self-center ml-1 mr-3">
+							<Search className="size-3.5" />
+						</div>
+						<input
+							data-settings-search
+							class=" w-full text-sm py-1 rounded-r-xl outline-hidden bg-transparent"
+							bind:value={searchValue}
+							placeholder={$i18n.t('Search Models')}
 						/>
 
 						<button
@@ -628,74 +657,356 @@ onMount(async () => {
 								<div
 									class=" flex-1 self-center {(model?.is_active ?? true) ? '' : 'text-gray-500'}"
 								>
-									<Tooltip
-										content={marked.parse(
-											!!model?.meta?.description
-												? model?.meta?.description
-												: model?.ollama?.digest
-													? `${model?.ollama?.digest} **(${model?.ollama?.modified_at})**`
-													: model.id
-										)}
-										className=" w-fit"
-										placement="top-start"
-									>
-										<div class="font-medium line-clamp-1 flex items-center gap-2">
-											{model.name}
+									<XMark className="size-3" strokeWidth="2" />
+								</button>
+							</div>
+						{/if}
+					</div>
 
-											<Badge
-												type={(model?.access_grants ?? []).some(
-													(g) =>
-														g.principal_type === 'user' &&
-														g.principal_id === '*' &&
-														g.permission === 'read'
-												)
-													? 'success'
-													: 'muted'}
-												content={(model?.access_grants ?? []).some(
-													(g) =>
-														g.principal_type === 'user' &&
-														g.principal_id === '*' &&
-														g.permission === 'read'
-												)
-													? $i18n.t('Public')
-													: $i18n.t('Private')}
-											/>
-										</div>
-									</Tooltip>
-									<div
-										class=" text-xs overflow-hidden text-ellipsis line-clamp-1 flex items-center gap-1 text-gray-500"
-									>
-										<span class=" line-clamp-1">
-											{!!model?.meta?.description
-												? model?.meta?.description
-												: model?.ollama?.digest
-													? `${model.id} (${model?.ollama?.digest})`
-													: model.id}
-										</span>
-									</div>
-								</div>
-							</button>
-							<div class="flex flex-row gap-0.5 items-center self-center">
-								{#if shiftKey}
-									<Tooltip content={model?.meta?.hidden ? $i18n.t('Show') : $i18n.t('Hide')}>
+					<div
+						class="flex max-w-[60%] shrink-0 items-center gap-1 overflow-x-auto scrollbar-none"
+						bind:this={tagsContainerElement}
+						on:wheel={(e) => {
+							if (e.deltaY !== 0) {
+								e.preventDefault();
+								e.currentTarget.scrollLeft += e.deltaY;
+							}
+						}}
+					>
+						<div
+							class="flex w-fit gap-0.5 text-center text-sm rounded-full bg-transparent whitespace-nowrap"
+						>
+							<AdminViewSelector bind:value={viewOption} align="end" />
+
+							{#if (tags ?? []).length > 0}
+								<TagSelector
+									bind:value={selectedTag}
+									align="end"
+									items={tags.map((tag) => {
+										return { value: tag, label: tag };
+									})}
+									onChange={async () => {
+										await init();
+									}}
+								/>
+							{/if}
+						</div>
+
+						<Dropdown align="end">
+							<Tooltip content={$i18n.t('Actions')}>
+								<button
+									class="flex h-8 items-center gap-1.5 rounded-xl bg-transparent px-1.5 text-[13px] font-normal text-gray-700 transition hover:text-gray-900 dark:text-gray-200 dark:hover:text-gray-100"
+									type="button"
+								>
+									<span>{$i18n.t('Actions')}</span>
+									<ChevronDown className="size-3" strokeWidth="2.5" />
+								</button>
+							</Tooltip>
+
+							<div slot="content">
+								<DropdownMenu className="w-[170px] shadow-sm">
+									{#if $user?.role === 'admin'}
 										<button
-											class="self-center w-fit text-sm px-2 py-2 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
+											class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[13px] disabled:pointer-events-none disabled:opacity-40 hover:text-gray-900 dark:hover:text-gray-100"
 											type="button"
+											disabled={modelsImportInProgress}
 											on:click={() => {
-												hideModelHandler(model);
+												modelsImportInputElement?.click();
 											}}
 										>
-											{#if model?.meta?.hidden}
-												<EyeSlash />
-											{:else}
-												<Eye />
-											{/if}
+											<DocumentArrowUp className="size-3.5" />
+											<div class="flex items-center">{$i18n.t('Import')}</div>
 										</button>
-									</Tooltip>
-								{:else}
+
+										<button
+											class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[13px] hover:text-gray-900 dark:hover:text-gray-100"
+											type="button"
+											on:click={() => {
+												downloadModels(models ?? []);
+											}}
+										>
+											<Download className="size-3.5" />
+											<div class="flex items-center">{$i18n.t('Export')}</div>
+										</button>
+									{/if}
+
 									<button
-										class="self-center w-fit text-sm px-2 py-2 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
+										class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[13px] hover:text-gray-900 dark:hover:text-gray-100"
 										type="button"
+										on:click={() => {
+											showManageModal = true;
+										}}
+									>
+										<Wrench className="size-3.5" />
+										<div class="flex items-center">{$i18n.t('Manage')}</div>
+									</button>
+
+									<button
+										class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[13px] hover:text-gray-900 dark:hover:text-gray-100"
+										type="button"
+										on:click={() => {
+											showResetModal = true;
+										}}
+									>
+										<GarbageBin className="size-3.5" />
+										<div class="flex items-center">{$i18n.t('Reset')}</div>
+									</button>
+
+									<hr class="mx-1 my-0.5 border-gray-100 dark:border-gray-800" />
+
+									<button
+										class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[13px] hover:text-gray-900 dark:hover:text-gray-100"
+										type="button"
+										on:click={() => {
+											enableAllHandler();
+										}}
+									>
+										<CheckCircle className="size-3.5" />
+										<div class="flex items-center">{$i18n.t('Enable All')}</div>
+									</button>
+
+									<button
+										class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[13px] hover:text-gray-900 dark:hover:text-gray-100"
+										type="button"
+										on:click={() => {
+											disableAllHandler();
+										}}
+									>
+										<Minus className="size-3.5" />
+										<div class="flex items-center">{$i18n.t('Disable All')}</div>
+									</button>
+
+									<hr class="mx-1 my-0.5 border-gray-100 dark:border-gray-800" />
+
+									<button
+										class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[13px] hover:text-gray-900 dark:hover:text-gray-100"
+										type="button"
+										on:click={() => {
+											showAllHandler();
+										}}
+									>
+										<Eye className="size-3.5" />
+										<div class="flex items-center">{$i18n.t('Show All')}</div>
+									</button>
+
+									<button
+										class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[13px] hover:text-gray-900 dark:hover:text-gray-100"
+										type="button"
+										on:click={() => {
+											hideAllHandler();
+										}}
+									>
+										<EyeSlash className="size-3.5" />
+										<div class="flex items-center">{$i18n.t('Hide All')}</div>
+									</button>
+								</DropdownMenu>
+							</div>
+						</Dropdown>
+					</div>
+				</div>
+
+				<div
+					class="my-0.5 min-h-0 flex-1 space-y-px {filteredModels.length > 0
+						? 'overflow-y-auto scrollbar-hover pr-1.5'
+						: 'overflow-hidden'}"
+					id="model-list"
+					bind:this={modelListElement}
+				>
+					{#if filteredModels.length > 0}
+						{#each filteredModels as model, modelIdx (`${model.id}-${modelIdx}`)}
+							<div
+								class="flex cursor-pointer transition w-full px-2 py-1 rounded-xl hover:bg-gray-50/70 dark:hover:bg-gray-850/50 {model
+									?.meta?.hidden
+									? 'opacity-50 dark:opacity-50'
+									: ''}"
+								id="model-item-{model.id}"
+							>
+								<div class="self-center pr-1 -ml-1 text-gray-400 dark:text-gray-600">
+									<Tooltip
+										content={canReorderModels
+											? $i18n.t('Drag to reorder')
+											: $i18n.t('Clear filters to reorder')}
+									>
+										<EllipsisVertical
+											className="size-4 {canReorderModels
+												? 'cursor-move model-item-handle'
+												: 'opacity-40'}"
+										/>
+									</Tooltip>
+								</div>
+
+								<button
+									class="flex group/item gap-2.5 w-full min-w-0 flex-1 text-left cursor-pointer"
+									type="button"
+									on:click={() => {
+										selectedModelId = model.id;
+									}}
+								>
+									<div class="self-center">
+										<div class="flex bg-white rounded-xl">
+											<div
+												class="{(model?.is_active ?? true)
+													? ''
+													: 'opacity-50 dark:opacity-50'} bg-transparent rounded-xl"
+											>
+												<img
+													src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}`}
+													alt="modelfile profile"
+													class=" rounded-xl size-7 object-cover"
+													loading="lazy"
+													decoding="async"
+													on:error={(e) => {
+														e.target.src = '/favicon.png';
+													}}
+												/>
+											</div>
+										</div>
+									</div>
+
+									<div
+										class="flex min-w-0 flex-1 pr-1 self-center {(model?.is_active ?? true)
+											? ''
+											: 'text-gray-500'}"
+									>
+										<Tooltip
+											content={marked.parse(
+												!!model?.meta?.description
+													? model?.meta?.description
+													: model?.ollama?.digest
+														? `${model?.ollama?.digest} **(${model?.ollama?.modified_at})**`
+														: model.id
+											)}
+											className="min-w-0 flex-1"
+											placement="top-start"
+										>
+											<div
+												class="flex min-w-0 items-center gap-1.5 text-[13px] font-normal leading-4"
+											>
+												<span class="min-w-0 truncate">{model.name}</span>
+
+												<span
+													class="shrink-0 text-[11px] font-normal leading-4 {modelAccessClass(
+														model
+													)}"
+												>
+													{modelAccessLabel(model)}
+												</span>
+
+												{#if defaultModelIdSet.has(model.id)}
+													<span
+														class="shrink-0 text-[11px] font-normal leading-4 text-gray-500 dark:text-gray-400"
+													>
+														{$i18n.t('Selected')}
+													</span>
+												{/if}
+
+												{#if defaultPinnedModelIdSet.has(model.id)}
+													<span
+														class="shrink-0 text-[11px] font-normal leading-4 text-gray-500 dark:text-gray-400"
+													>
+														{$i18n.t('Pinned')}
+													</span>
+												{/if}
+											</div>
+										</Tooltip>
+									</div>
+								</button>
+								<div class="flex shrink-0 flex-row gap-0.5 items-center self-center">
+									{#if shiftKey}
+										<Tooltip content={model?.meta?.hidden ? $i18n.t('Show') : $i18n.t('Hide')}>
+											<button
+												class="self-center w-fit text-sm p-1.5 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
+												type="button"
+												on:click={() => {
+													hideModelHandler(model);
+												}}
+											>
+												{#if model?.meta?.hidden}
+													<EyeSlash />
+												{:else}
+													<Eye />
+												{/if}
+											</button>
+										</Tooltip>
+
+										<Tooltip
+											content={defaultModelIdSet.has(model.id)
+												? $i18n.t('Remove Selected Model')
+												: $i18n.t('Set as Selected Model')}
+										>
+											<button
+												class="self-center w-fit text-sm p-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 {defaultModelIdSet.has(
+													model.id
+												)
+													? 'text-gray-900 dark:text-white'
+													: 'text-gray-500 dark:text-gray-400 dark:hover:text-white'}"
+												type="button"
+												aria-label={defaultModelIdSet.has(model.id)
+													? $i18n.t('Remove Selected Model')
+													: $i18n.t('Set as Selected Model')}
+												on:click={() => {
+													toggleDefaultModelHandler(model);
+												}}
+											>
+												<Check className="size-3.5" />
+											</button>
+										</Tooltip>
+
+										<Tooltip
+											content={defaultPinnedModelIdSet.has(model.id)
+												? $i18n.t('Remove Pinned Model')
+												: $i18n.t('Set as Pinned Model')}
+										>
+											<button
+												class="self-center w-fit text-sm p-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 {defaultPinnedModelIdSet.has(
+													model.id
+												)
+													? 'text-gray-900 dark:text-white'
+													: 'text-gray-500 dark:text-gray-400 dark:hover:text-white'}"
+												type="button"
+												aria-label={defaultPinnedModelIdSet.has(model.id)
+													? $i18n.t('Remove Pinned Model')
+													: $i18n.t('Set as Pinned Model')}
+												on:click={() => {
+													toggleDefaultPinnedModelHandler(model);
+												}}
+											>
+												{#if defaultPinnedModelIdSet.has(model.id)}
+													<PinSlash className="size-3.5" />
+												{:else}
+													<Pin className="size-3.5" />
+												{/if}
+											</button>
+										</Tooltip>
+
+										<Tooltip
+											content={isPublicModel(model)
+												? $i18n.t('Make Private')
+												: $i18n.t('Make Public')}
+										>
+											<button
+												class="self-center w-fit text-sm p-1.5 rounded-xl text-gray-500 hover:bg-black/5 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+												type="button"
+												aria-label={isPublicModel(model)
+													? $i18n.t('Make Private')
+													: $i18n.t('Make Public')}
+												on:click={() => {
+													toggleModelPrivacyHandler(model);
+												}}
+											>
+												{#if isPublicModel(model)}
+													<LockClosed className="size-3.5" />
+												{:else}
+													<GlobeAlt className="size-3.5" />
+												{/if}
+											</button>
+										</Tooltip>
+									{/if}
+
+									<button
+										class="hidden sm:flex self-center w-fit text-sm p-1.5 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
+										type="button"
+										aria-label={$i18n.t('Edit')}
 										on:click={() => {
 											selectedModelId = model.id;
 										}}
@@ -706,7 +1017,7 @@ onMount(async () => {
 											viewBox="0 0 24 24"
 											stroke-width="1.5"
 											stroke="currentColor"
-											class="w-4 h-4"
+											class="size-3.5"
 										>
 											<path
 												stroke-linecap="round"
@@ -725,6 +1036,17 @@ onMount(async () => {
 										hideHandler={() => {
 											hideModelHandler(model);
 										}}
+										privacyHandler={() => {
+											toggleModelPrivacyHandler(model);
+										}}
+										isDefaultSelected={defaultModelIdSet.has(model.id)}
+										isDefaultPinned={defaultPinnedModelIdSet.has(model.id)}
+										defaultSelectedHandler={() => {
+											toggleDefaultModelHandler(model);
+										}}
+										defaultPinnedHandler={() => {
+											toggleDefaultPinnedModelHandler(model);
+										}}
 										pinModelHandler={() => {
 											pinModelHandler(model.id);
 										}}
@@ -740,7 +1062,7 @@ onMount(async () => {
 											class="self-center w-fit text-sm p-1.5 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
 											type="button"
 										>
-											<EllipsisHorizontal className="size-5" />
+											<EllipsisHorizontal className="size-3.5" />
 										</button>
 									</ModelMenu>
 
@@ -758,26 +1080,44 @@ onMount(async () => {
 											/>
 										</Tooltip>
 									</div>
-								{/if}
+								</div>
+							</div>
+						{/each}
+					{:else}
+						<div class="flex h-full w-full items-center justify-center py-10">
+							<div class="max-w-md text-center">
+								<div class="mb-2 text-xl">😕</div>
+								<div class="mb-1 text-sm text-gray-700 dark:text-gray-300">
+									{$i18n.t('No models found')}
+								</div>
+								<div class=" text-gray-500 text-center text-xs">
+									{$i18n.t('Try adjusting your search or filter to find what you are looking for.')}
+								</div>
 							</div>
 						</div>
-					{/each}
-				{:else}
-					<div class=" w-full h-full flex flex-col justify-center items-center my-16 mb-24">
-						<div class="max-w-md text-center">
-							<div class=" text-3xl mb-3">😕</div>
-							<div class=" text-lg font-medium mb-1">{$i18n.t('No models found')}</div>
-							<div class=" text-gray-500 text-center text-xs">
-								{$i18n.t('Try adjusting your search or filter to find what you are looking for.')}
-							</div>
-						</div>
-					</div>
-				{/if}
-			</div>
+					{/if}
+				</div>
 
-			{#if filteredModels.length > perPage}
-				<Pagination bind:page={currentPage} count={filteredModels.length} {perPage} />
-			{/if}
+				<div class="flex justify-end pt-6 text-sm font-normal">
+					<button
+						class="flex items-center gap-2 px-3.5 py-1.5 text-sm font-normal bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full disabled:cursor-not-allowed disabled:opacity-40"
+						type="button"
+						disabled={(!modelOrderDirty && !modelDefaultsDirty) ||
+							savingModelOrder ||
+							savingModelsSettings}
+						on:click={async () => {
+							await saveModelsSettings();
+						}}
+					>
+						{$i18n.t('Save')}
+						{#if savingModelOrder || savingModelsSettings}
+							<span class="shrink-0">
+								<Spinner />
+							</span>
+						{/if}
+					</button>
+				</div>
+			</div>
 		</div>
 	{:else}
 		<ModelEditor
