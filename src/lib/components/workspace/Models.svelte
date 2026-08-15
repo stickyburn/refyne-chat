@@ -568,14 +568,26 @@ onMount(async () => {
 
 		{#if models !== null}
 			{#if (models ?? []).length !== 0}
-				<div class="my-1" id="model-list">
-					<div
-						class="flex w-full items-center gap-2 px-1.5 pb-0.5 text-xs text-gray-400 dark:text-gray-600"
-					>
-						<button
-							class="flex min-w-0 flex-1 items-center gap-1 py-0.5 text-left"
-							type="button"
-							on:click={() => setSortKey('name')}
+				<div class="px-3 my-2 gap-1 lg:gap-2 grid lg:grid-cols-2" id="model-list">
+					{#each models as model (model.id)}
+						<div
+							class="flex transition rounded-2xl w-full p-2.5 {model.write_access
+								? 'cursor-pointer dark:hover:bg-gray-850/50 hover:bg-gray-50'
+								: 'dark:hover:bg-gray-850/50 hover:bg-gray-50'}"
+							id="model-item-{model.id}"
+							role="button"
+							tabindex={model.write_access ? 0 : -1}
+							on:click={(e) => {
+								if (shouldIgnoreRowClick(e.target)) return;
+								openModel(model);
+							}}
+							on:keydown={(e) => {
+								if (e.currentTarget !== e.target) return;
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									openModel(model);
+								}
+							}}
 						>
 							<div class="flex group/item gap-3.5 w-full">
 								<div class="self-center pl-0.5">
@@ -775,11 +787,11 @@ onMount(async () => {
 									{/if}
 								</div>
 							</div>
-						{/each}
-					</div>
+						</div>
+					{/each}
 				</div>
 
-				{#if total > 30}
+			{#if total > 30}
 					<Pagination bind:page count={total} perPage={30} />
 				{/if}
 			{:else}

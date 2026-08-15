@@ -114,11 +114,28 @@
 						<span>{$WEBUI_NAME}</span> -
 					{/if}
 
-		{#if $config?.license_metadata}
-			<div class="mb-2 text-xs">
-				{#if $WEBUI_NAME && $WEBUI_NAME !== 'Refyne'}
-					<span class=" text-gray-500 dark:text-gray-300 font-medium">{$WEBUI_NAME}</span> -
-				{/if}
+					<span class="capitalize">{$config?.license_metadata?.type}</span> license purchased by
+					<span class="capitalize">{$config?.license_metadata?.organization_name}</span>
+				</div>
+			{:else}
+				<div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-400 dark:text-gray-600">
+					<a
+						class="hover:text-gray-700 dark:hover:text-gray-400"
+						href="https://discord.gg/5rJgQTnV4s"
+						target="_blank">Discord</a
+					>
+					<a
+						class="hover:text-gray-700 dark:hover:text-gray-400"
+						href="https://twitter.com/OpenWebUI"
+						target="_blank">X</a
+					>
+					<a
+						class="hover:text-gray-700 dark:hover:text-gray-400"
+						href="https://github.com/open-webui/open-webui"
+						target="_blank">GitHub</a
+					>
+				</div>
+			{/if}
 
 			<div class="text-xs text-gray-400 dark:text-gray-500">
 				Emoji graphics provided by
@@ -126,35 +143,10 @@
 				<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC-BY 4.0</a>.
 			</div>
 
-				<a href="https://twitter.com/OpenWebUI" target="_blank">
-					<img
-						alt="X (formerly Twitter) Follow"
-						src="https://img.shields.io/twitter/follow/OpenWebUI"
-					/>
-				</a>
-
-				<a href="https://github.com/open-webui/open-webui" target="_blank">
-					<img
-						alt="Github Repo"
-						src="https://img.shields.io/github/stars/open-webui/open-webui?style=social&label=Star us on Github"
-					/>
-				</a>
-			</div>
-		{/if}
-
-		<div class="mt-2 text-xs text-gray-400 dark:text-gray-500">
-			Emoji graphics provided by
-			<a href="https://github.com/jdecked/twemoji" target="_blank">Twemoji</a>, licensed under
-			<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC-BY 4.0</a>.
-		</div>
-
-		<div>
-			<pre
-				class="text-xs text-gray-400 dark:text-gray-500">Copyright (c) {new Date().getFullYear()} <a
-					href="https://refyne.ai"
-					target="_blank"
-					class="underline">Refyne</a
-				> <a href="https://github.com/open-webui/open-webui/blob/main/LICENSE" target="_blank"
+			<div class="text-xs text-gray-400 dark:text-gray-500">
+				Copyright (c) {new Date().getFullYear()}
+				<a href="https://refyne.ai" target="_blank" class="underline">Refyne</a>
+				<a href="https://github.com/open-webui/open-webui/blob/main/LICENSE" target="_blank"
 					>All rights reserved.</a
 				>
 			</div>

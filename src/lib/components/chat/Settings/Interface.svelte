@@ -32,6 +32,7 @@ let responseAutoCopy = false;
 let widescreenMode = false;
 let splitLargeChunks = false;
 let scrollOnBranchChange = true;
+let scrollOnResponseGeneration = true;
 let showFilesOnTerminalSelect = true;
 let userLocation = false;
 
@@ -251,6 +252,7 @@ onMount(async () => {
 	widescreenMode = $settings?.widescreenMode ?? false;
 	splitLargeChunks = $settings?.splitLargeChunks ?? false;
 	scrollOnBranchChange = $settings?.scrollOnBranchChange ?? true;
+	scrollOnResponseGeneration = $settings?.scrollOnResponseGeneration ?? true;
 	showFilesOnTerminalSelect = $settings?.showFilesOnTerminalSelect ?? true;
 
 	temporaryChatByDefault = $settings?.temporaryChatByDefault ?? false;

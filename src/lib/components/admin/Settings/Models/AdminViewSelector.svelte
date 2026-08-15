@@ -18,8 +18,6 @@
 		{ value: 'disabled', label: $i18n.t('Disabled') },
 		{ value: 'visible', label: $i18n.t('Visible') },
 		{ value: 'hidden', label: $i18n.t('Hidden') },
-		{ value: 'public', label: $i18n.t('Public') },
-		{ value: 'private', label: $i18n.t('Private') },
 		{ value: 'selected', label: $i18n.t('Selected') },
 		{ value: 'pinned', label: $i18n.t('Pinned') }
 	];
