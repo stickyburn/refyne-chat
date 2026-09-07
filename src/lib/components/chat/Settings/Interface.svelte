@@ -18,6 +18,7 @@ const dispatch = createEventDispatcher();
 const i18n = getContext('i18n');
 
 export let saveSettings: Function;
+export let personalSettingsValue: Record<string, any> = {};
 
 let backgroundImageUrl = null;
 let inputFiles = null;
