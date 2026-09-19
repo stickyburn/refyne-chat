@@ -156,8 +156,6 @@
 	let processing = '';
 	let messagesContainerElement: HTMLDivElement;
 
-	let navbarElement;
-
 	let showEventConfirmation = false;
 	let eventConfirmationTitle = '';
 	let eventConfirmationMessage = '';
@@ -175,10 +173,6 @@
 	let navbarHidden = false;
 	let previousScrollTop = 0;
 	const SCROLL_THRESHOLD = 50;
-
-	function handleNavbarDropdownOpen() {
-		navbarHidden = false;
-	}
 
 	let selectedModels = [''];
 	let atSelectedModel: Model | undefined;
@@ -4311,9 +4305,7 @@
 						</div>
 					{:else}
 						<Navbar
-							bind:this={navbarElement}
 							hidden={navbarHidden}
-							on:dropdownOpen={handleNavbarDropdownOpen}
 							{readOnly}
 							chat={{
 								id: $chatId,
@@ -4328,7 +4320,6 @@
 							}}
 							{history}
 							title={$chatTitle}
-							bind:selectedModels
 							shareEnabled={!!history.currentId}
 							{initNewChat}
 							scrollToTop={!isNearTop ? scrollToTop : null}

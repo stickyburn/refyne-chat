@@ -1,5 +1,7 @@
 <script lang="ts">
 import { getContext } from 'svelte';
+import type { Writable } from 'svelte/store';
+import type { i18n as i18nType } from 'i18next';
 import { toast } from 'svelte-sonner';
 
 import {
@@ -17,12 +19,10 @@ import {
 
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-import { createEventDispatcher } from 'svelte';
 import { slide } from 'svelte/transition';
 
 import Menu from '$lib/components/layout/Navbar/Menu.svelte';
 import UserMenu from '$lib/components/layout/Sidebar/UserMenu.svelte';
-import ModelSelector from '../chat/ModelSelector.svelte';
 import ShareChatModal from '../chat/ShareChatModal.svelte';
 import Tooltip from '../common/Tooltip.svelte';
 import AdjustmentsHorizontal from '../icons/AdjustmentsHorizontal.svelte';
@@ -37,9 +37,9 @@ import ChatCheck from '../icons/ChatCheck.svelte';
 import ChatPlus from '../icons/ChatPlus.svelte';
 import EllipsisHorizontal from '../icons/EllipsisHorizontal.svelte';
 import Knobs from '../icons/Knobs.svelte';
+import { isTemporaryChatId } from '$lib/utils/chatId';
 
-const i18n = getContext('i18n');
-const dispatch = createEventDispatcher();
+const i18n = getContext<Writable<i18nType>>('i18n');
 
 export let initNewChat: Function;
 export let readOnly: boolean = false;
@@ -51,9 +51,7 @@ export let hidden = false;
 
 export let chat;
 export let history;
-export let selectedModels;
-export let showModelSelector = true;
-
+export let title = '';
 export let onSaveTempChat: () => {};
 export let archiveChatHandler: (id: string) => void;
 export let deleteChatHandler: (id: string) => void;
@@ -71,11 +69,6 @@ const getDismissedBannerIds = (): string[] => {
 
 let showShareChatModal = false;
 let showDownloadChatModal = false;
-let dropdownOpen = false;
-
-$: if (dropdownOpen && hidden) {
-	dispatch('dropdownOpen');
-}
 </script>
 
 <ShareChatModal bind:show={showShareChatModal} chatId={$chatId} />
@@ -126,19 +119,51 @@ $: if (dropdownOpen && hidden) {
 				{/if}
 
 				<div
-					class="flex-1 overflow-hidden max-w-full py-0.5
-			{$showSidebar ? 'ml-1' : ''}
-			"
+					class="flex-1 overflow-hidden max-w-full mt-0.5 py-0.5 pl-1 {$showSidebar ? 'ml-1' : ''}"
 				>
-					{#if showModelSelector}
-						<ModelSelector
-							bind:selectedModels
-							showSetDefault={!shareEnabled && !readOnly}
-							disabled={readOnly}
-							on:openChange={(e) => {
-								dropdownOpen = e.detail;
-							}}
-						/>
+					{#if chat?.id}
+						<div class="flex max-w-full min-w-0 items-center gap-2 mr-2">
+							<div
+								class="min-w-0 truncate py-1 text-left text-[0.9375rem] font-normal text-gray-700 dark:text-gray-300"
+							>
+								{title || chat?.chat?.title || $i18n.t('New Chat')}
+							</div>
+
+							{#if shareEnabled && chat && (chat.id || $temporaryChatEnabled)}
+								<Menu
+									{chat}
+									{shareEnabled}
+									{readOnly}
+									{scrollToTop}
+									shareHandler={() => {
+										showShareChatModal = !showShareChatModal;
+									}}
+									archiveChatHandler={() => {
+										archiveChatHandler(chat.id);
+									}}
+									deleteChatHandler={() => {
+										deleteChatHandler(chat.id);
+									}}
+									{moveChatHandler}
+								>
+									<button
+										class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-50/40 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800/40 dark:hover:text-gray-200"
+										id="chat-context-menu-button"
+										aria-label={$i18n.t('Chat actions')}
+									>
+										<EllipsisHorizontal className="size-4.5" strokeWidth="1.5" />
+									</button>
+								</Menu>
+							{/if}
+						</div>
+					{:else}
+						<div class="pointer-events-none invisible flex max-w-full min-w-0 items-center gap-2">
+							<div
+								class="min-w-0 truncate py-1 text-left text-[0.9375rem] font-normal text-gray-700 dark:text-gray-300"
+							>
+								{$i18n.t('New Chat')}
+							</div>
+						</div>
 					{/if}
 				</div>
 
@@ -207,34 +232,6 @@ $: if (dropdownOpen && hidden) {
 								<ChatPlus className="size-4.5" strokeWidth="1.5" />
 							</button>
 						</Tooltip>
-					{/if}
-
-					{#if shareEnabled && chat && (chat.id || $temporaryChatEnabled)}
-						<Menu
-							{chat}
-							{shareEnabled}
-							{readOnly}
-							{scrollToTop}
-							shareHandler={() => {
-								showShareChatModal = !showShareChatModal;
-							}}
-							archiveChatHandler={() => {
-								archiveChatHandler(chat.id);
-							}}
-							deleteChatHandler={() => {
-								deleteChatHandler(chat.id);
-							}}
-							{moveChatHandler}
-						>
-							<button
-								class="flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
-								id="chat-context-menu-button"
-							>
-								<div class=" m-auto self-center">
-									<EllipsisHorizontal className=" size-5" strokeWidth="1.5" />
-								</div>
-							</button>
-						</Menu>
 					{/if}
 
 					{#if $user?.permissions.chat?.controls ?? true}

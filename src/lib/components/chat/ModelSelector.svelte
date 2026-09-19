@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { models, pinnedModels, settings, user } from '$lib/stores';
-	import { createEventDispatcher, getContext } from 'svelte';
+	import { getContext } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import Selector from './ModelSelector/Selector.svelte';
 
 	import { updateUserSettings } from '$lib/apis/users';
 	import equal from 'fast-deep-equal';
 	const i18n = getContext('i18n');
-	const dispatch = createEventDispatcher();
 
 	export let selectedModels = [''];
 	export let disabled = false;
@@ -84,7 +83,6 @@
 					{align}
 					showSetDefault={showSetDefault && !isCurrentModelDefault(selectedModels[0])}
 					onSetDefault={saveDefaultModel}
-					on:openChange={(event) => dispatch('openChange', event.detail)}
 					multipleEnabled={$user?.role === 'admin' ||
 						($user?.permissions?.chat?.multiple_models ?? true)}
 					{disabled}
