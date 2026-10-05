@@ -1,6 +1,6 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
-import { WEBUI_BASE_URL } from '$lib/constants';
+import { COMMUNITY_ORIGINS, WEBUI_BASE_URL } from '$lib/constants';
 import { config, models, settings } from '$lib/stores';
 import { toast } from 'svelte-sonner';
 
@@ -10,7 +10,7 @@ import { getContext, onMount, tick } from 'svelte';
 
 import ModelEditor from '$lib/components/workspace/Models/ModelEditor.svelte';
 
-const i18n = getContext('i18n');
+const i18n = getContext<any>('i18n');
 
 const onSubmit = async (modelInfo) => {
 	if ($models.find((m) => m.id === modelInfo.id)) {
@@ -20,12 +20,12 @@ const onSubmit = async (modelInfo) => {
 				{ modelId: modelInfo.id }
 			)
 		);
-		return;
+		return false;
 	}
 
 	if (modelInfo.id === '') {
 		toast.error($i18n.t('Error: Model ID cannot be empty. Please enter a valid ID to proceed.'));
-		return;
+		return false;
 	}
 
 	if (modelInfo) {
@@ -45,27 +45,31 @@ const onSubmit = async (modelInfo) => {
 		});
 
 		if (res) {
-			await models.set(
-				await getModels(
-					localStorage.token,
-					$config?.features?.enable_direct_connections && ($settings?.directConnections ?? null)
-				)
-			);
-			toast.success($i18n.t('Model created successfully!'));
-			await goto('/workspace/models');
+			try {
+				await models.set(
+					await getModels(
+						localStorage.token,
+						$config?.features?.enable_direct_connections
+							? ($settings?.directConnections ?? null)
+							: null
+					)
+				);
+				toast.success($i18n.t('Model created successfully!'));
+				await goto('/workspace/models');
+			} catch (error: any) {
+				toast.error(`${error?.message ?? error}`);
+			}
+			return true;
 		}
 	}
+	return false;
 };
 
 let model = null;
 
 onMount(() => {
 	const handleMessageEvent = async (event: MessageEvent) => {
-		if (
-			!['https://openwebui.com', 'https://www.openwebui.com', 'http://localhost:9999'].includes(
-				event.origin
-			)
-		) {
+		if (!COMMUNITY_ORIGINS.includes(event.origin)) {
 			return;
 		}
 

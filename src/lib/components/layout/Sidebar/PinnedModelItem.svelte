@@ -4,6 +4,7 @@ import { getContext } from 'svelte';
 const i18n = getContext('i18n');
 
 import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
+import { resolveLocalizedModelName } from '$lib/utils/localizedContent';
 
 import Tooltip from '$lib/components/common/Tooltip.svelte';
 import PinSlash from '$lib/components/icons/PinSlash.svelte';
@@ -14,6 +15,7 @@ export let onClick = () => {};
 export let onUnpin = () => {};
 
 let mouseOver = false;
+$: localizedModelName = resolveLocalizedModelName(model, $i18n.language);
 </script>
 
 {#if model}
@@ -49,7 +51,7 @@ let mouseOver = false;
 
 			<div class="flex self-center translate-y-[0.5px]">
 				<div class=" self-center text-[0.8125rem] leading-5 line-clamp-1">
-					{model?.name ?? model.id}
+					{localizedModelName}
 				</div>
 			</div>
 		</a>

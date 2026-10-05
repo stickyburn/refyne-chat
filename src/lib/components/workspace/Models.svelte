@@ -1,4 +1,6 @@
 <script lang="ts">
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { marked } from 'marked';
 
 import Sortable from 'sortablejs';
@@ -9,22 +11,39 @@ const { saveAs } = fileSaver;
 
 import { goto } from '$app/navigation';
 import { getContext, onMount, tick } from 'svelte';
-const i18n = getContext('i18n');
+const i18n = getContext<any>('i18n');
+dayjs.extend(relativeTime);
 
 import {
-	createNewModel,
+	exportModels,
+	importModels,
 	deleteModelById,
+	getModelById,
 	getModelTags,
 	getModelItems as getWorkspaceModels,
 	toggleModelById,
 	updateModelById
 } from '$lib/apis/models';
 import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
-import { WEBUI_NAME, models as _models, config, mobile, settings, user } from '$lib/stores';
+import {
+	WEBUI_NAME,
+	models as _models,
+	pinnedModels,
+	config,
+	mobile,
+	settings,
+	user,
+	workspaceActions,
+	workspaceCounts
+} from '$lib/stores';
 
 import { getModels } from '$lib/apis';
 import { getGroups } from '$lib/apis/groups';
 import { updateUserSettings } from '$lib/apis/users';
+import {
+	resolveLocalizedModelDescription,
+	resolveLocalizedModelName
+} from '$lib/utils/localizedContent';
 
 import { capitalizeFirstLetter, copyToClipboard } from '$lib/utils';
 
@@ -33,7 +52,7 @@ import Spinner from '../common/Spinner.svelte';
 import Switch from '../common/Switch.svelte';
 import Tooltip from '../common/Tooltip.svelte';
 import CheckCircle from '../icons/CheckCircle.svelte';
-import ChevronRight from '../icons/ChevronRight.svelte';
+import ChevronDown from '../icons/ChevronDown.svelte';
 import EllipsisHorizontal from '../icons/EllipsisHorizontal.svelte';
 import Eye from '../icons/Eye.svelte';
 import EyeSlash from '../icons/EyeSlash.svelte';
@@ -46,9 +65,11 @@ import ModelMenu from './Models/ModelMenu.svelte';
 
 import Badge from '$lib/components/common/Badge.svelte';
 import Dropdown from '$lib/components/common/Dropdown.svelte';
+import DropdownMenu from '$lib/components/common/DropdownMenu.svelte';
 import Pagination from '../common/Pagination.svelte';
 import TagSelector from './common/TagSelector.svelte';
 import ViewSelector from './common/ViewSelector.svelte';
+import CommunityDiscover from './common/CommunityDiscover.svelte';
 
 let shiftKey = false;
 
@@ -76,6 +97,40 @@ let total = null;
 
 let searchDebounceTimer;
 
+$: if (loaded) {
+	workspaceActions.set([
+		{
+			id: 'models-new',
+			label: $i18n.t('Create'),
+			href: '/workspace/models/create'
+		},
+		{
+			id: 'models-import',
+			label: $i18n.t('Import JSON'),
+			onClick: () => modelsImportInputElement?.click(),
+			visible: $user?.role === 'admin' || $user?.permissions?.workspace?.models_import
+		},
+		{
+			id: 'models-export',
+			label: $i18n.t('Export JSON'),
+			onClick: async () => {
+				await downloadModels();
+			},
+			visible: $user?.role === 'admin' || $user?.permissions?.workspace?.models_export
+		}
+	]);
+}
+
+const openModel = (model) => {
+	if (model.write_access) {
+		goto(`/workspace/models/edit?id=${encodeURIComponent(model.id)}`);
+	}
+};
+
+const shouldIgnoreRowClick = (target: EventTarget | null) => {
+	return target instanceof Element && !!target.closest('button, a, input, [role="menu"]');
+};
+
 $: if (loaded && page !== undefined && selectedTag !== undefined && viewOption !== undefined) {
 	getModelList();
 }
@@ -100,6 +155,7 @@ const getModelList = async () => {
 		if (res) {
 			models = res.items;
 			total = res.total;
+			workspaceCounts.update((counts) => ({ ...counts, models: total }));
 
 			// get tags
 			tags = await getModelTags(localStorage.token).catch((error) => {
@@ -133,7 +189,11 @@ const deleteModelHandler = async (model) => {
 	);
 };
 
+const getFullModel = async (model: any) =>
+	(await getModelById(localStorage.token, model.id).catch(() => null)) ?? model;
+
 const cloneModelHandler = async (model) => {
+	model = await getFullModel(model);
 	sessionStorage.model = JSON.stringify({
 		...model,
 		id: `${model.id}-clone`,
@@ -146,13 +206,14 @@ const shareModelHandler = async (model) => {
 	toast.success($i18n.t('Redirecting you to Open WebUI Community'));
 
 	const url = 'https://openwebui.com';
+	const fullModel = getFullModel(model);
 
 	const tab = await window.open(`${url}/post?type=model`, '_blank');
 
-	const messageHandler = (event) => {
+	const messageHandler = async (event) => {
 		if (event.origin !== url) return;
 		if (event.data === 'loaded') {
-			tab.postMessage(JSON.stringify(model), '*');
+			tab.postMessage(JSON.stringify(await fullModel), '*');
 			window.removeEventListener('message', messageHandler);
 		}
 	};
@@ -161,25 +222,27 @@ const shareModelHandler = async (model) => {
 };
 
 const hideModelHandler = async (model) => {
-	model.meta = {
-		...model.meta,
-		hidden: !(model?.meta?.hidden ?? false)
+	const updatedModel = {
+		...model,
+		meta: {
+			...model.meta,
+			hidden: !(model?.meta?.hidden ?? false)
+		}
 	};
 
-	console.log(model);
-
-	const res = await updateModelById(localStorage.token, model.id, model);
+	const res = await updateModelById(localStorage.token, updatedModel.id, updatedModel);
 
 	if (res) {
+		models = models.map((model) => (model.id === updatedModel.id ? updatedModel : model));
 		toast.success(
 			$i18n.t(`Model {{name}} is now {{status}}`, {
-				name: model.id,
-				status: model.meta.hidden ? 'hidden' : 'visible'
+				name: updatedModel.id,
+				status: updatedModel.meta.hidden ? 'hidden' : 'visible'
 			})
 		);
 
 		page = 1;
-		getModelList();
+		await getModelList();
 	}
 
 	await _models.set(
@@ -201,7 +264,16 @@ const copyLinkHandler = async (model) => {
 	}
 };
 
-const downloadModels = async (models) => {
+const downloadModels = async (models = null) => {
+	try {
+		models = await exportModels(
+			localStorage.token,
+			models ? models.map((model: { id: string }) => model.id) : undefined
+		);
+	} catch (error: any) {
+		toast.error(`${error?.detail ?? error}`);
+		return;
+	}
 	let blob = new Blob([JSON.stringify(models)], {
 		type: 'application/json'
 	});
@@ -209,6 +281,12 @@ const downloadModels = async (models) => {
 };
 
 const exportModelHandler = async (model) => {
+	try {
+		[model] = await exportModels(localStorage.token, [model.id]);
+	} catch (error: any) {
+		toast.error(`${error?.detail ?? error}`);
+		return;
+	}
 	let blob = new Blob([JSON.stringify([model])], {
 		type: 'application/json'
 	});
@@ -216,16 +294,13 @@ const exportModelHandler = async (model) => {
 };
 
 const pinModelHandler = async (modelId) => {
-	let pinnedModels = $settings?.pinnedModels ?? [];
-
-	if (pinnedModels.includes(modelId)) {
-		pinnedModels = pinnedModels.filter((id) => id !== modelId);
-	} else {
-		pinnedModels = [...new Set([...pinnedModels, modelId])];
-	}
-
-	settings.set({ ...$settings, pinnedModels: pinnedModels });
-	await updateUserSettings(localStorage.token, { ui: $settings });
+	settings.set({
+		...$settings,
+		pinnedModels: $pinnedModels.includes(modelId)
+			? $pinnedModels.filter((id) => id !== modelId)
+			: [...$pinnedModels, modelId]
+	});
+	await updateUserSettings(localStorage.token, { ui: { pinnedModels: $settings.pinnedModels } });
 };
 
 const fetchAllWorkspaceModels = async () => {
@@ -393,27 +468,18 @@ onMount(async () => {
 					return;
 				}
 
-				for (const model of savedModels) {
-					if (model?.info ?? false) {
-						if ($_models.find((m) => m.id === model.id)) {
-							await updateModelById(localStorage.token, model.id, model.info).catch((error) => {
-								toast.error(`${error}`);
-								return null;
-							});
-						} else {
-							await createNewModel(localStorage.token, model.info).catch((error) => {
-								toast.error(`${error}`);
-								return null;
-							});
-						}
-					} else {
-						if (model?.id && model?.name) {
-							await createNewModel(localStorage.token, model).catch((error) => {
-								toast.error(`${error}`);
-								return null;
-							});
-						}
-					}
+				if (!Array.isArray(savedModels)) {
+					toast.error($i18n.t('Invalid JSON file'));
+					return;
+				}
+				try {
+					await importModels(
+						localStorage.token,
+						savedModels.map((model) => model.info ?? model)
+					);
+				} catch (error: any) {
+					toast.error(`${error?.detail ?? error}`);
+					return;
 				}
 
 				await _models.set(
@@ -570,6 +636,7 @@ onMount(async () => {
 			{#if (models ?? []).length !== 0}
 				<div class="px-3 my-2 gap-1 lg:gap-2 grid lg:grid-cols-2" id="model-list">
 					{#each models as model (model.id)}
+						{@const localizedModelName = resolveLocalizedModelName(model, $i18n.language)}
 						<div
 							class="flex transition rounded-2xl w-full p-2.5 {model.write_access
 								? 'cursor-pointer dark:hover:bg-gray-850/50 hover:bg-gray-50'
@@ -617,12 +684,16 @@ onMount(async () => {
 									<div class="flex min-w-0 flex-1 flex-col overflow-hidden">
 										<div class="flex min-w-0 items-center gap-2 overflow-hidden">
 											<div class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
-												<Tooltip content={model.name} className="min-w-0" placement="top-start">
+												<Tooltip
+													content={localizedModelName}
+													className="min-w-0"
+													placement="top-start"
+												>
 													<a
 														href={`/?model=${encodeURIComponent(model.id)}`}
 														class="truncate text-[13px] leading-5 text-gray-800 group-hover:underline dark:text-gray-200"
 													>
-														{model.name}
+														{localizedModelName}
 													</a>
 												</Tooltip>
 
@@ -647,7 +718,9 @@ onMount(async () => {
 										</div>
 
 										<Tooltip
-											content={(model?.meta?.description ?? '').trim() ||
+											content={(
+												resolveLocalizedModelDescription(model, $i18n.language) ?? ''
+											).trim() ||
 												model.base_model_id ||
 												$i18n.t('No description')}
 											className="min-w-0"
@@ -656,7 +729,7 @@ onMount(async () => {
 											<div
 												class="truncate text-[0.6875rem] leading-4 text-gray-400 dark:text-gray-600"
 											>
-												{(model?.meta?.description ?? '').trim() ||
+												{(resolveLocalizedModelDescription(model, $i18n.language) ?? '').trim() ||
 													model.base_model_id ||
 													$i18n.t('No description')}
 											</div>
