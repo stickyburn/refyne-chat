@@ -793,7 +793,7 @@
 	size="full"
 	ariaLabel={$i18n.t('Overview')}
 	containerClassName="p-2 sm:p-6"
-	className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden"
+	className="bg-panel text-content rounded-2xl overflow-hidden"
 >
 	<div class="flex h-[calc(100dvh-1rem-2px)] sm:h-[calc(100dvh-3rem-2px)] flex-col">
 		<div class="flex items-center justify-between px-4 py-3 shrink-0">
@@ -831,7 +831,7 @@
 	id="controls-container"
 >
 	<div
-		class="flex items-center px-2 pt-1 pb-1 gap-1 shrink-0 select-none col-start-1 row-start-1 min-w-0 z-10 bg-white dark:bg-gray-900"
+		class="flex items-center px-2 pt-1 pb-1 gap-1 shrink-0 select-none col-start-1 row-start-1 min-w-0 z-10 bg-panel text-content"
 	>
 		<div class="flex items-center gap-0.5 flex-1 min-w-0 py-0.5">
 			<div
@@ -982,7 +982,7 @@
 		{/if}
 	</div>
 	<div
-		class="relative flex-1 min-h-0 min-w-0 col-start-1 row-start-2"
+		class="relative flex-1 min-h-0 min-w-0 col-start-1 row-start-2 bg-canvas"
 		class:hidden={mainChatActive}
 	>
 		{#each tabs.tabs.filter((tab) => tab.kind !== 'chat') as tab (tab.id)}
@@ -1161,7 +1161,7 @@
 				panelStyle={$mobile ? panelStyle : ''}
 				backdropStyle={$mobile ? backdropStyle : ''}
 				swipeSide={$mobile ? 'right' : undefined}
-				className="min-h-[100dvh] !bg-white dark:!bg-gray-900"
+				className="min-h-[100dvh] !bg-panel"
 			>
 				<div use:preservePanel bind:this={panelTarget} class="h-[100dvh] flex flex-col"></div>
 			</Drawer>
@@ -1174,7 +1174,7 @@
 		minWidth={280}
 		minSiblingWidth={360}
 		storageKey="chatControlsSize"
-		className="h-full z-10 bg-white dark:bg-gray-900"
+		className="h-full z-10 bg-panel"
 	>
 		<div
 			use:preservePanel

@@ -33,7 +33,7 @@
 	{items}
 	placeholder={placeholder ?? $i18n.t('Select a model')}
 	triggerClass="relative w-full"
-	contentClass="w-full rounded-lg bg-white dark:bg-gray-900 dark:text-white shadow-lg border border-gray-300/30 dark:border-gray-700/40 outline-hidden"
+	contentClass="w-full rounded-lg bg-panel text-content shadow-lg border border-edge outline-hidden"
 	onClose={() => {
 		searchValue = '';
 	}}

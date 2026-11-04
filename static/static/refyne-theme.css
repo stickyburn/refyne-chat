@@ -1,0 +1,63 @@
+/* Hyprway colors from ~/.config/theme/hyprway.json. Share colors, not app geometry. */
+:root {
+	--hyprway-background: #18111b;
+	--hyprway-panel: #1d1522;
+	--hyprway-surface: #26162e;
+	--hyprway-edge: #2a1d31;
+	--hyprway-text: #d8d0ea;
+	--hyprway-muted: #9d92b0;
+	--hyprway-pink: #ff91c3;
+	--hyprway-signal: #ff338f;
+	--hyprway-violet: #c79eff;
+	--hyprway-mint: #98e4a7;
+	--hyprway-background-light: #eee9ff;
+	--hyprway-text-light: #1f1221;
+	--hyprway-pink-light: #a62d68;
+	--hyprway-violet-light: #7740aa;
+	--hyprway-mint-light: #197344;
+	--hyprway-signal-light: #bf1d68;
+	--hyprway-lavender-light: #e0caf6;
+
+	color-scheme: light;
+	--refyne-background: var(--hyprway-background-light);
+	--refyne-panel: var(--hyprway-lavender-light);
+	--refyne-surface: var(--hyprway-lavender-light);
+	--refyne-text: var(--hyprway-text-light);
+	--refyne-text-muted: var(--hyprway-edge);
+	--refyne-border: var(--hyprway-violet-light);
+	--refyne-focus: var(--hyprway-violet-light);
+	--refyne-accent: var(--hyprway-pink-light);
+	--refyne-on-accent: var(--hyprway-background-light);
+	--refyne-success: var(--hyprway-mint-light);
+	--refyne-danger: var(--hyprway-signal-light);
+}
+
+:root.dark {
+	color-scheme: dark;
+	--refyne-background: var(--hyprway-background);
+	--refyne-panel: var(--hyprway-panel);
+	--refyne-surface: var(--hyprway-surface);
+	--refyne-text: var(--hyprway-text);
+	--refyne-text-muted: var(--hyprway-muted);
+	--refyne-border: var(--hyprway-edge);
+	--refyne-focus: var(--hyprway-violet);
+	--refyne-accent: var(--hyprway-pink);
+	--refyne-on-accent: var(--hyprway-edge);
+	--refyne-success: var(--hyprway-mint);
+	--refyne-danger: var(--hyprway-signal);
+}
+
+/* Keep the existing optional OLED and Her appearances separate from normal dark/light. */
+:root.oled-dark {
+	--refyne-background: #000000;
+	--refyne-panel: #050505;
+	--refyne-surface: #101010;
+	--color-gray-800: #101010;
+	--color-gray-850: #050505;
+	--color-gray-900: #000000;
+	--color-gray-950: #000000;
+}
+
+:root.her {
+	--refyne-background: #983724;
+}

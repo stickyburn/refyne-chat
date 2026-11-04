@@ -10,6 +10,10 @@ declare global {
 	const APP_BUILD_HASH: string;
 	const APP_BUILD_CHANNEL: 'main' | 'dev' | 'unknown';
 
+	interface Window {
+		applyRefyneTheme: (preference?: string) => void;
+	}
+
 	namespace App {
 		interface PageState {
 			inbox?: boolean;

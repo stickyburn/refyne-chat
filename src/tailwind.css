@@ -18,18 +18,35 @@
 	--font-primary: var(--font-sans);
 	--font-secondary: var(--font-sans);
 
-	--color-gray-50: var(--color-gray-50);
-	--color-gray-100: var(--color-gray-100);
-	--color-gray-200: var(--color-gray-200);
-	--color-gray-300: var(--color-gray-300);
-	--color-gray-400: var(--color-gray-400);
-	--color-gray-500: var(--color-gray-500);
-	--color-gray-600: var(--color-gray-600);
-	--color-gray-700: var(--color-gray-700);
-	--color-gray-800: var(--color-gray-800);
-	--color-gray-850: var(--color-gray-850);
-	--color-gray-900: var(--color-gray-900);
-	--color-gray-950: var(--color-gray-950);
+	/* Compatibility ramp for upstream components; semantic surfaces are defined below. */
+	--color-gray-50: var(--hyprway-background-light);
+	--color-gray-100: var(--hyprway-lavender-light);
+	--color-gray-200: var(--hyprway-text);
+	--color-gray-300: color-mix(in srgb, var(--hyprway-text) 70%, var(--hyprway-muted));
+	--color-gray-400: var(--refyne-text-muted);
+	--color-gray-500: var(--refyne-text-muted);
+	--color-gray-600: color-mix(in srgb, var(--hyprway-muted) 40%, var(--hyprway-edge));
+	--color-gray-700: var(--hyprway-edge);
+	--color-gray-800: var(--hyprway-surface);
+	--color-gray-850: var(--hyprway-panel);
+	--color-gray-900: var(--hyprway-background);
+	--color-gray-950: var(--hyprway-background);
+	--color-white: var(--hyprway-background-light);
+	--color-black: var(--hyprway-background);
+}
+
+@theme inline {
+	--color-canvas: var(--refyne-background);
+	--color-panel: var(--refyne-panel);
+	--color-surface: var(--refyne-surface);
+	--color-content: var(--refyne-text);
+	--color-muted: var(--refyne-text-muted);
+	--color-edge: var(--refyne-border);
+	--color-focus: var(--refyne-focus);
+	--color-accent: var(--refyne-accent);
+	--color-on-accent: var(--refyne-on-accent);
+	--color-success: var(--refyne-success);
+	--color-danger: var(--refyne-danger);
 }
 
 /*
@@ -69,24 +86,24 @@
 
 	input::placeholder,
 	textarea::placeholder {
-		color: theme(--color-gray-400);
+		color: var(--refyne-text-muted);
 	}
 
 	input[type="checkbox"] {
-		@apply appearance-none size-3.5 align-middle bg-white border border-gray-300 rounded transition cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-800 dark:border-gray-600 self-center;
+		@apply appearance-none size-3.5 align-middle bg-panel border border-edge rounded transition cursor-pointer focus:ring-2 focus:ring-focus focus:outline-none self-center;
 		/* Center the custom mark */
 		display: inline-block;
 		position: relative;
 	}
 
 	input[type="radio"] {
-		@apply appearance-none size-3.5 align-middle bg-white border border-gray-300 rounded-full transition cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-800 dark:border-gray-600 self-center;
+		@apply appearance-none size-3.5 align-middle bg-panel border border-edge rounded-full transition cursor-pointer focus:ring-2 focus:ring-focus focus:outline-none self-center;
 		display: inline-block;
 		position: relative;
 	}
 
 	input[type="radio"]:checked {
-		@apply border-blue-600;
+		@apply border-focus;
 	}
 
 	input[type="radio"]:checked:after {
@@ -101,14 +118,14 @@
 		top: 20%;
 		left: 20%;
 		border-radius: 50%;
-		background: white;
+		background: var(--refyne-focus);
 	}
 
 	input[type="radio"]:checked:after {
 		opacity: 1;
 	}
 	input[type="checkbox"]:checked {
-		@apply bg-blue-600 border-blue-600;
+		@apply bg-focus border-focus;
 	}
 	input[type="checkbox"]:after {
 		content: "";
@@ -123,7 +140,8 @@
 		left: 0;
 		pointer-events: none;
 		/* SVG checkmark as background image */
-		background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 8l3 3l5-5"/></svg>')
+		background-color: var(--refyne-on-accent);
+		mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 16 16" fill="none" stroke="black" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 8l3 3l5-5"/></svg>')
 			center / 80% no-repeat;
 	}
 	input[type="checkbox"]:checked:after {
@@ -137,31 +155,24 @@
 	input:active,
 	textarea:active,
 	select:active,
-	#message-input-container:focus-within,
 	#message-input-container:focus-within {
-		border-color: var(--color-accent) !important;
-		border-width: 1px !important;
-		outline: none;
+		border-color: var(--refyne-focus);
 	}
 
 	input[type="checkbox"]:focus,
 	input[type="checkbox"]:active,
 	input[type="checkbox"]:checked:focus,
 	input[type="checkbox"]:checked:active {
-		border-color: var(--color-accent) !important;
-		box-shadow: 0 0 0 1px var(--color-accent);
+		border-color: var(--refyne-focus);
+		box-shadow: 0 0 0 1px var(--refyne-focus);
 	}
 
 	input[type="radio"]:focus,
 	input[type="radio"]:active,
 	input[type="radio"]:checked:focus,
 	input[type="radio"]:checked:active {
-		border-color: var(--color-accent) !important;
-		box-shadow: 0 0 0 1px var(--color-accent);
-	}
-
-	input[type="checkbox"]:checked {
-		@apply bg-blue-600 border-blue-600;
+		border-color: var(--refyne-focus);
+		box-shadow: 0 0 0 1px var(--refyne-focus);
 	}
 }
 
@@ -173,42 +184,3 @@
 }
 
 @custom-variant hover (&:hover);
-
-/* Theme-aware color variables */
-:root {
-	--color-gray-50: #e8e2fb;
-	--color-gray-100: #e7e2f9;
-	--color-gray-200: #e8e4f0;
-	--color-gray-300: #bab1d1;
-	--color-gray-400: #b2a6d0;
-	--color-gray-500: #a8a4b0;
-	--color-gray-600: #888490;
-	--color-gray-700: #2a1d31;
-	--color-gray-800: #2a1d31;
-	--color-gray-850: #2a1d31;
-	--color-gray-900: #121019;
-	--color-gray-950: #121019;
-
-	--color-white: #eee9ff;
-	--color-black: #121019;
-	--color-accent: #c79eff;
-}
-
-.dark {
-	--color-gray-50: #e8e2fb;
-	--color-gray-100: #e7e2f9;
-	--color-gray-200: #e8e4f0;
-	--color-gray-300: #a090a0;
-	--color-gray-400: #807080;
-	--color-gray-500: #605060;
-	--color-gray-600: #504050;
-	--color-gray-700: #2a1d31;
-	--color-gray-800: #2a1d31;
-	--color-gray-850: #2a1d31;
-	--color-gray-900: #14111b;
-	--color-gray-950: #14111b;
-
-	--color-white: #eee9ff;
-	--color-black: #14111b;
-	--color-accent: #c79eff;
-}

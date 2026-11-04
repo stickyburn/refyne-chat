@@ -6,7 +6,7 @@
 
 	/** CSS classes for the sub-content container */
 	export let contentClass =
-		'select-none rounded-2xl p-1 z-50 bg-white dark:bg-gray-850 dark:text-white shadow-lg border border-gray-100 dark:border-gray-800';
+		'select-none rounded-2xl p-1 z-50 bg-panel text-content shadow-lg border border-edge';
 
 	/** Max width at the default 16px root size; scales with the interface. */
 	export let maxWidth = 200;
