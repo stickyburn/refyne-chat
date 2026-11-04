@@ -19,6 +19,7 @@
 		user
 	} from '$lib/stores';
 	import { processingQueueChannels, processNextInQueue } from '$lib/utils/channelQueue';
+	import { shouldEnterSubmit, isTouchCapableDevice } from '$lib/utils/enterToSend';
 	import {
 		getMentionUserQueries,
 		resolveMentions,
@@ -812,7 +813,7 @@
 		loaded = true;
 
 		window.setTimeout(() => {
-			if (chatInputElement) {
+			if (chatInputElement && !$mobile) {
 				chatInputElement.focus();
 			}
 		}, 100);
@@ -1152,25 +1153,24 @@
 															}
 														}
 													}
-													if (
-														!$mobile ||
-														!(
-															'ontouchstart' in window ||
-															navigator.maxTouchPoints > 0 ||
-															navigator.msMaxTouchPoints > 0
-														)
-													) {
-														// Uses keyCode '13' for Enter key for chinese/japanese keyboards
-														const enterPressed =
-															($settings?.ctrlEnterToSend ?? false)
-																? (e.key === 'Enter' || e.keyCode === 13) && isCtrlPressed
-																: (e.key === 'Enter' || e.keyCode === 13) && !e.shiftKey;
+													// Enter-to-send rules are shared with the chat composer via
+													// shouldEnterSubmit (IME protection, Shift newline, Ctrl/Cmd+Enter,
+													// mobile opt-in).
+													const enterPressed = shouldEnterSubmit({
+														isEnterKey: e.key === 'Enter' || e.keyCode === 13,
+														isComposing: false, // Composition is guarded before all shortcuts above.
+														shiftKey: e.shiftKey,
+														ctrlOrMetaKey: isCtrlPressed,
+														mobile: $mobile,
+														touchCapable: isTouchCapableDevice(),
+														ctrlEnterToSend: $settings?.ctrlEnterToSend ?? false,
+														enterToSendMobile: $settings?.enterToSendMobile ?? false
+													});
 
-														if (enterPressed) {
-															e.preventDefault();
-															if (content !== '' || files.length > 0) {
-																submitHandler();
-															}
+													if (enterPressed) {
+														e.preventDefault();
+														if (content !== '' || files.length > 0) {
+															submitHandler();
 														}
 													}
 												}

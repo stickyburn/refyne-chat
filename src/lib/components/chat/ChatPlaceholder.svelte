@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 	import { marked } from 'marked';
 	import DOMPurify from 'dompurify';
 
@@ -60,47 +59,7 @@
 </script>
 
 {#key mounted}
-	<div class="m-auto w-full max-w-[58rem] px-8 lg:px-20">
-		<div class="flex justify-start">
-			<div class="flex -space-x-4 mb-0.5" in:fade={{ duration: 200 }}>
-				{#each models as model, modelIdx}
-					<button
-						aria-hidden={models.length <= 1}
-						tabindex={models.length > 1 ? 0 : -1}
-						aria-label={$i18n.t('Get information on {{name}} in the UI', {
-							name: resolveLocalizedModelName(model, $i18n.language)
-						})}
-						on:click={() => {
-							selectedModelIdx = modelIdx;
-						}}
-					>
-						<Tooltip
-							content={DOMPurify.sanitize(
-								marked.parse(
-									sanitizeResponseContent(selectedModelDescription).replaceAll('\n', '<br>')
-								)
-							)}
-							allowHTML={true}
-							placement="right"
-						>
-							<img
-								src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model?.id}&lang=${$i18n.language}`}
-								class=" size-[2.7rem] rounded-full"
-								alt=""
-								draggable="false"
-								on:error={(e) => {
-									// LICENSE covers this Open WebUI fallback logo.
-									// Do not alter, remove, obscure, or replace it except as LICENSE permits:
-									// https://docs.openwebui.com/license.
-									e.currentTarget.src = '/favicon.png';
-								}}
-							/>
-						</Tooltip>
-					</button>
-				{/each}
-			</div>
-		</div>
-
+	<div class="m-auto w-full max-w-6xl px-8 lg:px-20">
 		{#if $temporaryChatEnabled}
 			<Tooltip
 				content={$i18n.t("This chat won't appear in history and your messages will not be saved.")}
@@ -118,11 +77,7 @@
 		>
 			<div>
 				<h2 class=" capitalize line-clamp-1" in:fade={{ duration: 200 }}>
-					{#if selectedModelName}
-						{selectedModelName}
-					{:else}
-						{$i18n.t('Hello, {{name}}', { name: $user?.name })}
-					{/if}
+					{$i18n.t('Hello, {{name}}', { name: $user?.name })}
 				</h2>
 
 				<div in:fade={{ duration: 200, delay: 200 }}>

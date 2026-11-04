@@ -40,7 +40,7 @@
 			<div class="self-center shrink-0">
 				<img
 					src={`${WEBUI_API_BASE_URL}/models/model/profile/image?id=${model.id}&lang=${$i18n.language}`}
-					class=" size-4 rounded-full"
+					class=" size-5 rounded-full -translate-x-[0.5px]"
 					alt="logo"
 					on:error={(e) => {
 						// LICENSE covers this Open WebUI fallback logo.

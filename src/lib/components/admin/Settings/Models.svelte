@@ -52,7 +52,6 @@
 	import Eye from '$lib/components/icons/Eye.svelte';
 	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
 	import Check from '$lib/components/icons/Check.svelte';
-	import CheckCircle from '$lib/components/icons/CheckCircle.svelte';
 	import GarbageBin from '$lib/components/icons/GarbageBin.svelte';
 	import Minus from '$lib/components/icons/Minus.svelte';
 	import DocumentArrowUp from '$lib/components/icons/DocumentArrowUp.svelte';
@@ -173,8 +172,6 @@
 				if (viewOption === 'disabled') return !(m?.is_active ?? true);
 				if (viewOption === 'visible') return !(m?.meta?.hidden ?? false);
 				if (viewOption === 'hidden') return m?.meta?.hidden === true;
-				if (viewOption === 'public') return isPublicModel(m);
-				if (viewOption === 'private') return !isPublicModel(m);
 				if (viewOption === 'selected') return defaultModelIdSet.has(m.id);
 				if (viewOption === 'pinned') return defaultPinnedModelIdSet.has(m.id);
 				return true; // All
@@ -217,44 +214,6 @@
 			modelsToDisable.map((model) => upsertModelHandler(model, { is_active: false }, false))
 		);
 
-		await tick();
-		await init();
-	};
-
-	const showAllHandler = async () => {
-		const modelsToShow = filteredModels.filter((m) => m?.meta?.hidden === true);
-		// Optimistic UI update
-		modelsToShow.forEach((m) => {
-			m.meta = { ...m.meta, hidden: false };
-		});
-		models = models;
-		// Sync with server
-		await Promise.all(
-			modelsToShow.map((model) =>
-				upsertModelHandler(model, { meta: { ...model.meta, hidden: false } }, false)
-			)
-		);
-
-		toast.success($i18n.t('All models are now visible'));
-		await tick();
-		await init();
-	};
-
-	const hideAllHandler = async () => {
-		const modelsToHide = filteredModels.filter((m) => !(m?.meta?.hidden ?? false));
-		// Optimistic UI update
-		modelsToHide.forEach((m) => {
-			m.meta = { ...m.meta, hidden: true };
-		});
-		models = models;
-		// Sync with server
-		await Promise.all(
-			modelsToHide.map((model) =>
-				upsertModelHandler(model, { meta: { ...model.meta, hidden: true } }, false)
-			)
-		);
-
-		toast.success($i18n.t('All models are now hidden'));
 		await tick();
 		await init();
 	};
@@ -970,7 +929,7 @@
 											enableAllHandler();
 										}}
 									>
-										<CheckCircle className="size-3.5" />
+										<Eye className="size-3.5" />
 										<div class="flex items-center">
 											{$i18n.t('settings.admin.models.enableAllModels.label')}
 										</div>
@@ -986,34 +945,6 @@
 										<Minus className="size-3.5" />
 										<div class="flex items-center">
 											{$i18n.t('settings.admin.models.disableAllModels.label')}
-										</div>
-									</button>
-
-									<hr class="mx-1 my-0.5 border-gray-100 dark:border-gray-800" />
-
-									<button
-										class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[0.8125rem] hover:text-gray-900 dark:hover:text-gray-100"
-										type="button"
-										on:click={() => {
-											showAllHandler();
-										}}
-									>
-										<Eye className="size-3.5" />
-										<div class="flex items-center">
-											{$i18n.t('settings.admin.models.showAllModels.label')}
-										</div>
-									</button>
-
-									<button
-										class="flex h-[1.6875rem] w-full cursor-pointer select-none items-center gap-2 rounded-xl bg-transparent px-2 text-[0.8125rem] hover:text-gray-900 dark:hover:text-gray-100"
-										type="button"
-										on:click={() => {
-											hideAllHandler();
-										}}
-									>
-										<EyeSlash className="size-3.5" />
-										<div class="flex items-center">
-											{$i18n.t('settings.admin.models.hideAllModels.label')}
 										</div>
 									</button>
 								</DropdownMenu>

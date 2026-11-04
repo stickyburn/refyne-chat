@@ -183,10 +183,9 @@
 	let autoScroll = true;
 	let lastScrollTop = 0;
 	let isNearTop = true;
+	let navbarElement;
 	let processing = '';
 	let messagesContainerElement: HTMLDivElement;
-
-	let navbarElement;
 
 	let showEventConfirmation = false;
 	let pendingUrlActions: { urls: string[]; call: boolean } | null = null;
@@ -222,6 +221,9 @@
 			resolveBrowserInteraction(interaction, { status: 'cancelled', answers: {} });
 		}
 	};
+
+	let navbarHidden = false;
+	const SCROLL_THRESHOLD = 50;
 
 	let selectedModels = [''];
 	let selectedModelIdx = 0;
@@ -5349,6 +5351,7 @@
 							bind:tabActions
 							{liveParticipants}
 							bind:this={navbarElement}
+							hidden={navbarHidden}
 							readOnly={isShared}
 							chat={{
 								id: $chatId,
@@ -5425,8 +5428,18 @@
 									autoScroll =
 										scrollHeight - scrollTop <= clientHeight + 5 ||
 										(autoScroll && scrollTop >= lastScrollTop);
-									lastScrollTop = scrollTop;
+
 									isNearTop = scrollTop <= 100;
+
+									if (scrollTop < SCROLL_THRESHOLD) {
+										navbarHidden = false;
+									} else if (scrollTop > lastScrollTop) {
+										navbarHidden = true;
+									} else if (scrollTop < lastScrollTop - 2) {
+										navbarHidden = false;
+									}
+
+									lastScrollTop = scrollTop;
 								}}
 							>
 								<div class=" h-full w-full flex flex-col">

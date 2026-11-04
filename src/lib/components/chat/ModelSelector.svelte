@@ -80,7 +80,7 @@
 					{triggerClassName}
 					{placement}
 					{align}
-					{showSetDefault}
+					showSetDefault={showSetDefault && !equal($settings?.models ?? [], selectedModels)}
 					onSetDefault={saveDefaultModel}
 					multipleEnabled={multipleEnabled &&
 						($user?.role === 'admin' || ($user?.permissions?.chat?.multiple_models ?? true))}

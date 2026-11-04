@@ -40,7 +40,7 @@
 					editorTheme.of(isDark ? oneDark : []),
 					EditorView.theme({
 						'&': { fontSize: '13px' },
-						'.cm-content': { fontFamily: 'ui-monospace, monospace' },
+						'.cm-content': { fontFamily: 'var(--font-mono)' },
 						'.cm-scroller': { maxHeight: '320px', overflow: 'auto' },
 						'&.cm-focused': { outline: 'none' }
 					}),

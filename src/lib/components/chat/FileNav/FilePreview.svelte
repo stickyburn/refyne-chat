@@ -663,6 +663,10 @@
 	:global(.dark) .csv-row-num {
 		color: #6b7280;
 	}
+	/* Refyne: apply the app mono font (Maple Mono) to office/excel table previews. */
+	:global(.office-preview table) {
+		font-family: var(--font-mono);
+	}
 	/* DOCX / generic office styles */
 	:global(.office-preview img) {
 		max-width: 100%;

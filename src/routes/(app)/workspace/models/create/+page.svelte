@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
-	import { config, models, settings } from '$lib/stores';
 	import { COMMUNITY_ORIGINS, WEBUI_BASE_URL } from '$lib/constants';
+	import { config, models, settings } from '$lib/stores';
+	import { toast } from 'svelte-sonner';
 
-	import { onMount, tick, getContext } from 'svelte';
-	import { createNewModel, getModelById } from '$lib/apis/models';
 	import { getModels } from '$lib/apis';
+	import { createNewModel, getModelById } from '$lib/apis/models';
+	import { getContext, onMount, tick } from 'svelte';
 
 	import ModelEditor from '$lib/components/workspace/Models/ModelEditor.svelte';
 
@@ -33,11 +33,8 @@
 				...modelInfo,
 				meta: {
 					...modelInfo.meta,
-					// LICENSE covers this Open WebUI fallback logo.
-					// Do not alter, remove, obscure, or replace it except as LICENSE permits:
-					// https://docs.openwebui.com/license.
 					profile_image_url:
-						modelInfo.meta.profile_image_url ?? `${WEBUI_BASE_URL}/static/favicon.png`,
+						modelInfo.meta.profile_image_url ?? `/static/model-placeholder.webp`,
 					suggestion_prompts: modelInfo.meta.suggestion_prompts
 						? modelInfo.meta.suggestion_prompts.filter((prompt) => prompt.content !== '')
 						: null

@@ -176,8 +176,7 @@
 			cursorBlink: !readOnly,
 			disableStdin: readOnly,
 			fontSize: 13,
-			fontFamily:
-				"'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Monaco, 'Courier New', monospace",
+			fontFamily: "'Maple Mono NF', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
 			minimumContrastRatio: 4.5,
 			scrollback: 5000
 		});

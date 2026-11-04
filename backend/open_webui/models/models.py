@@ -149,7 +149,7 @@ class ModelVoiceAvatar(BaseModel):
 class ModelMeta(BaseModel):
     """Metadata for a workspace model entry (profile, description, tags, capabilities)."""
 
-    profile_image_url: str | None = None
+    profile_image_url: str | None = '/static/model-placeholder.webp'
     background_image_url: str | None = None
     description: str | None = Field(default=None, description='User-facing description of the model.')
     i18n: dict[str, Any] | None = None

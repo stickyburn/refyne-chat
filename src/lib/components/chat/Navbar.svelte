@@ -31,8 +31,7 @@
 	import Banner from '../common/Banner.svelte';
 	import Sidebar from '../icons/Sidebar.svelte';
 
-	import ChatBubbleDotted from '../icons/ChatBubbleDotted.svelte';
-	import ChatBubbleDottedChecked from '../icons/ChatBubbleDottedChecked.svelte';
+	import GhostIcon from '../icons/GhostIcon.svelte';
 
 	import EllipsisHorizontal from '../icons/EllipsisHorizontal.svelte';
 	import ChatPlus from '../icons/ChatPlus.svelte';
@@ -55,6 +54,8 @@
 	export let shareEnabled: boolean = false;
 	export let scrollTop = 0;
 	export let scrollToTop: (() => void) | null = null;
+
+	export let hidden = false;
 
 	export let chat: any;
 	export let history: any;
@@ -214,11 +215,7 @@
 					}}
 					aria-label={$i18n.t(`Temporary Chat`)}
 				>
-					{#if $temporaryChatEnabled}
-						<ChatBubbleDottedChecked className="size-4" strokeWidth="1.5" />
-					{:else}
-						<ChatBubbleDotted className="size-4" strokeWidth="1.5" />
-					{/if}
+					<GhostIcon className="size-6" strokeWidth="1.2" active={$temporaryChatEnabled} />
 				</button>
 			</Tooltip>
 		{:else if chat?.id && $temporaryChatEnabled}
@@ -303,7 +300,9 @@
 	class:hidden={tabbed}
 	class="sticky top-0 z-30 w-full {$mobile
 		? 'pt-1.5'
-		: ''} pb-1 -mb-12 flex flex-col items-center drag-region"
+		: ''} pb-1 -mb-12 flex flex-col items-center drag-region transition-transform duration-200 {hidden
+		? '-translate-y-full'
+		: 'translate-y-0'} focus-within:translate-y-0 hover:translate-y-0"
 >
 	<div class="flex items-center w-full {$mobile ? 'px-1.5' : 'pl-1.5 pr-1'}">
 		<div

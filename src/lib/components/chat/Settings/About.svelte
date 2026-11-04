@@ -175,7 +175,7 @@
 				https://docs.openwebui.com/license. -->
 				{$i18n.t('Copyright (c)')}
 				{new Date().getFullYear()}
-				<a href="https://openwebui.com" target="_blank" class="underline">Open WebUI Inc.</a>
+				<a href="https://refyne.ai" target="_blank" class="underline">Refyne</a>
 				<a href="https://github.com/open-webui/open-webui/blob/main/LICENSE" target="_blank"
 					>{$i18n.t('All rights reserved.')}</a
 				>

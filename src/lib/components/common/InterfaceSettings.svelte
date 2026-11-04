@@ -86,6 +86,7 @@
 	let chatBubble = true;
 	let chatDirection: 'LTR' | 'RTL' | 'auto' = 'auto';
 	let ctrlEnterToSend = false;
+	let enterToSendMobile = false;
 	let copyFormatted = false;
 
 	let temporaryChatByDefault = false;
@@ -256,6 +257,11 @@
 		saveSettings({ ctrlEnterToSend });
 	};
 
+	const toggleEnterToSendMobile = async () => {
+		enterToSendMobile = !enterToSendMobile;
+		saveSettings({ enterToSendMobile });
+	};
+
 	export const save = async () => {
 		const normalizedFontFamily = normalizeAppFontFamily(fontFamilyInput) || null;
 		fontFamily = normalizedFontFamily;
@@ -399,6 +405,7 @@
 
 		hapticFeedback = currentSettings?.hapticFeedback ?? false;
 		ctrlEnterToSend = currentSettings?.ctrlEnterToSend ?? false;
+		enterToSendMobile = currentSettings?.enterToSendMobile ?? false;
 
 		showFloatingActionButtons = currentSettings?.showFloatingActionButtons ?? true;
 		floatingActionButtons = currentSettings?.floatingActionButtons ?? null;
@@ -1734,6 +1741,34 @@
 		<p class={settingDescriptionClass}>
 			{$i18n.t('settings.personal.interface.enterKeyBehavior.description')}
 		</p>
+	</div>
+
+	<div>
+		<div class={settingRowClass}>
+			<label
+				id="mobile-enter-key-behavior-label"
+				class={settingLabelClass}
+				for="mobile-enter-key-behavior-label-control"
+			>
+				{$i18n.t('Mobile Enter Key Behavior')}
+			</label>
+
+			<button
+				id="mobile-enter-key-behavior-label-control"
+				aria-labelledby="mobile-enter-key-behavior-label"
+				class={actionButtonClass}
+				on:click={() => {
+					toggleEnterToSendMobile();
+				}}
+				type="button"
+			>
+				<span id="enter-to-send-mobile-state"
+					>{enterToSendMobile === true
+						? $i18n.t('Enter to Send')
+						: $i18n.t('Enter for Newline')}</span
+				>
+			</button>
+		</div>
 	</div>
 
 	{#if $visibleControls['settings.rich_text_input']}

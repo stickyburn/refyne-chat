@@ -25,7 +25,6 @@ export default defineConfig({
 				},
 				{
 					src: 'node_modules/onnxruntime-web/dist/*.jsep.*',
-
 					dest: 'wasm'
 				}
 			]
@@ -44,6 +43,8 @@ export default defineConfig({
 		esbuildOptions: { target: 'es2022' }
 	},
 	server: {
+		port: 5000,
+		host: '0.0.0.0',
 		proxy: {
 			'/api': {
 				target: backendTarget,

@@ -18,8 +18,8 @@ from fastapi import (
     Response,
     status,
 )
-from fastapi.responses import RedirectResponse, StreamingResponse
-from open_webui.config import BYPASS_ADMIN_ACCESS_CONTROL
+from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
+from open_webui.config import BYPASS_ADMIN_ACCESS_CONTROL, STATIC_DIR
 from open_webui.constants import ERROR_MESSAGES
 from open_webui.env import (
     BYPASS_MODEL_ACCESS_CONTROL,
@@ -972,7 +972,7 @@ async def get_model_profile_image(
 
     bypass_access_control = BYPASS_MODEL_ACCESS_CONTROL or (user.role == 'admin' and BYPASS_ADMIN_ACCESS_CONTROL)
 
-    # First, check the database for regular models
+    # First, check the database for regular models.
     model_meta = await Models.get_model_meta_by_id(id, db=db)
     if model_meta:
         meta, model_user_id, model_updated_at = model_meta
@@ -991,7 +991,7 @@ async def get_model_profile_image(
             profile_image_url = (meta or {}).get('profile_image_url')
             updated_at = model_updated_at
 
-    # Fallback: check arena models stored in config (not in the DB)
+    # Fallback: check arena models stored in config (not in the DB).
     if not profile_image_url:
         arena_models = await Config.get('evaluation.arena.models', []) or []
         for arena_model in arena_models:
@@ -1013,9 +1013,8 @@ async def get_model_profile_image(
                     status_code=status.HTTP_302_FOUND,
                     headers={'Location': profile_image_url},
                 )
-            # When forwarding is disabled, fall through to the
-            # default image to prevent client-side IP/UA/Referer
-            # leaks via 302 redirect to external origins.
+            # When forwarding is disabled, fall through to the custom default
+            # image to prevent client-side IP/UA/Referer leaks via external 302s.
         elif profile_image_url.startswith('data:image'):
             try:
                 header, base64_data = profile_image_url.split(',', 1)
@@ -1055,13 +1054,7 @@ async def get_model_profile_image(
                     status_code=status.HTTP_302_FOUND,
                 )
 
-    # LICENSE covers this Open WebUI fallback logo.
-    # Do not alter, remove, obscure, or replace it except as LICENSE permits:
-    # https://docs.openwebui.com/license.
-    return RedirectResponse(
-        url='/static/favicon.png',
-        status_code=status.HTTP_302_FOUND,
-    )
+    return FileResponse(f'{STATIC_DIR}/model-placeholder.webp')
 
 
 # Toggle Model By Id

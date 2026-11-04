@@ -74,6 +74,7 @@
 	import { uploadFile } from '$lib/apis/files';
 	import { getCwd, uploadNewFileToTerminal } from '$lib/apis/terminal';
 	import { isSavedChatId } from '$lib/utils/chatId';
+	import { shouldEnterSubmit, isTouchCapableDevice } from '$lib/utils/enterToSend';
 	import { generateAutoCompletion } from '$lib/apis';
 	import { deleteFileById } from '$lib/apis/files';
 	import { getChatById } from '$lib/apis/chats';
@@ -1965,7 +1966,9 @@
 								recording = false;
 
 								await tick();
-								focus({ preventScroll: true });
+								if (!$mobile) {
+									focus({ preventScroll: true });
+								}
 							}}
 							onConfirm={async (data) => {
 								const { text, filename } = data;
@@ -1975,7 +1978,9 @@
 								await tick();
 								await insertTextAtCursor(`${text}`);
 								await tick();
-								focus({ preventScroll: true });
+								if (!$mobile) {
+									focus({ preventScroll: true });
+								}
 
 								if ($settings?.speechAutoSend ?? false) {
 									dispatch('submit', prompt);
@@ -2376,34 +2381,26 @@
 														}
 
 														if (!suggestionsContainerElement) {
-															if (
-																!$mobile ||
-																!(
-																	'ontouchstart' in window ||
-																	navigator.maxTouchPoints > 0 ||
-																	navigator.msMaxTouchPoints > 0
-																)
-															) {
-																if (inOrNearComposition(e)) {
-																	return;
-																}
+															if (inOrNearComposition(e)) return;
 
-																// Uses keyCode '13' for Enter key for chinese/japanese keyboards.
-																//
-																// Depending on the user's settings, it will send the message
-																// either when Enter is pressed or when Ctrl+Enter is pressed.
-																const enterPressed =
-																	($settings?.ctrlEnterToSend ?? false)
-																		? (e.key === 'Enter' || e.keyCode === 13) &&
-																			isCtrlPressed &&
-																			!e.shiftKey
-																		: (e.key === 'Enter' || e.keyCode === 13) && !e.shiftKey;
+															// Enter-to-send rules are shared with the channel
+															// composer via shouldEnterSubmit (IME protection,
+															// Shift newline, Ctrl/Cmd+Enter, mobile opt-in).
+															const enterPressed = shouldEnterSubmit({
+																isEnterKey: e.key === 'Enter' || e.keyCode === 13,
+																isComposing: false, // Composition is guarded above, including other shortcuts.
+																shiftKey: e.shiftKey,
+																ctrlOrMetaKey: isCtrlPressed,
+																mobile: $mobile,
+																touchCapable: isTouchCapableDevice(),
+																ctrlEnterToSend: $settings?.ctrlEnterToSend ?? false,
+																enterToSendMobile: $settings?.enterToSendMobile ?? false
+															});
 
-																if (enterPressed) {
-																	e.preventDefault();
-																	if (prompt !== '' || files.length > 0) {
-																		dispatch('submit', prompt);
-																	}
+															if (enterPressed) {
+																e.preventDefault();
+																if (prompt !== '' || files.length > 0) {
+																	dispatch('submit', prompt);
 																}
 															}
 														}
